@@ -2,8 +2,8 @@ package com.alexjlockwood.twentyfortyeight.repository
 
 import android.content.Context
 import com.alexjlockwood.twentyfortyeight.domain.Tile
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private const val KEY_SHARED_PREFS = "key_shared_prefs"
 private const val KEY_GRID = "key_grid"
@@ -17,7 +17,7 @@ class GameRepository(context: Context) {
 
     private val sharedPrefs = context.getSharedPreferences(KEY_SHARED_PREFS, Context.MODE_PRIVATE)
 
-    var grid: List<List<Int?>>? = sharedPrefs.getString(KEY_GRID, null)?.let { Gson().fromJson(it) }
+    var grid: List<List<Int?>>? = sharedPrefs.getString(KEY_GRID, null)?.let { Json.decodeFromString(it) }
         private set
 
     var currentScore: Int = sharedPrefs.getInt(KEY_CURRENT_SCORE, 0)
@@ -31,11 +31,9 @@ class GameRepository(context: Context) {
         this.currentScore = currentScore
         this.bestScore = bestScore
         sharedPrefs.edit()
-            .putString(KEY_GRID, Gson().toJson(this.grid))
+            .putString(KEY_GRID, Json.encodeToString(this.grid))
             .putInt(KEY_CURRENT_SCORE, currentScore)
             .putInt(KEY_BEST_SCORE, bestScore)
             .apply()
     }
 }
-
-private inline fun <reified T> Gson.fromJson(json: String) = fromJson<T>(json, object : TypeToken<T>() {}.type)
