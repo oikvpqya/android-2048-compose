@@ -7,6 +7,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
             val gameRepository = GameRepository(this)
             val gameViewModel = viewModel { GameViewModel(gameRepository) }
             val isDarkTheme = isSystemInDarkTheme()
+            BackHandler(enabled = gameViewModel.canUndo) { gameViewModel.undo() }
             AppTheme(isDarkTheme) {
                 Surface {
                     GameUi(
@@ -42,10 +44,12 @@ class MainActivity : ComponentActivity() {
                         currentScore = gameViewModel.currentScore,
                         bestScore = gameViewModel.bestScore,
                         moveCount = gameViewModel.moveCount,
+                        canUndo = gameViewModel.canUndo,
                         isGameOver = gameViewModel.isGameOver,
                         isDarkTheme = isDarkTheme,
                         isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT,
                         onNewGameRequested = { gameViewModel.startNewGame() },
+                        onUndoGameRequested = { gameViewModel.undo() },
                         onSwipeListener = { direction -> gameViewModel.move(direction) },
                     )
                 }
