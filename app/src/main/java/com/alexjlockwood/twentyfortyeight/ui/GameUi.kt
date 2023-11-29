@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,10 +49,12 @@ fun GameUi(
     currentScore: Int,
     bestScore: Int,
     moveCount: Int,
+    canUndo: Boolean,
     isGameOver: Boolean,
     isDarkTheme: Boolean,
     isPortrait: Boolean,
     onNewGameRequested: () -> Unit,
+    onUndoGameRequested: () -> Unit,
     onSwipeListener: (direction: Direction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -63,6 +66,9 @@ fun GameUi(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.app_name)) },
                 actions = {
+                    IconButton(onClick = { onUndoGameRequested() }, enabled = canUndo) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = null)
+                    }
                     IconButton(onClick = { shouldShowNewGameDialog = true }) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                     }
@@ -105,9 +111,7 @@ fun GameUi(
             title = "Game over",
             message = "Start a new game?",
             onConfirmListener = { onNewGameRequested() },
-            onDismissListener = {
-                // TODO: allow user to dismiss the dialog so they can take a screenshot
-            },
+            onDismissListener = { onUndoGameRequested() },
         )
     } else if (shouldShowNewGameDialog) {
         GameDialog(

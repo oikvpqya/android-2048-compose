@@ -35,6 +35,11 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         private set
     var moveCount by mutableIntStateOf(0)
         private set
+    var canUndo by mutableStateOf(false)
+        private set
+
+    data class Stack(val grid: List<List<Tile?>>, val currentScore: Int, val bestScore: Int)
+    private val stack = ArrayDeque(listOf<Stack>())
 
     init {
         val savedGrid = gameRepository.grid
@@ -61,6 +66,8 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         currentScore = 0
         isGameOver = false
         moveCount = 0
+        stack.clear()
+        canUndo = false
         save()
     }
 
@@ -71,6 +78,9 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
             // No tiles were moved.
             return
         }
+
+        // Push game to stack.
+        stack.add(Stack(grid, currentScore, bestScore))
 
         // Increment the score.
         val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
@@ -90,6 +100,21 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
         isGameOver = checkIsGameOver(grid)
         moveCount++
+        canUndo = true
+        save()
+    }
+
+    fun undo() {
+        require(canUndo)
+        // Pop and restore game from stack.
+        val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeLast()
+        grid = updatedGrid
+        gridTileMovements = grid.toGridTileMovements()
+        currentScore = updatedCurrentScore
+        bestScore = updatedBestScore
+        isGameOver = checkIsGameOver(grid)
+        moveCount--
+        canUndo = stack.isNotEmpty()
         save()
     }
 }
