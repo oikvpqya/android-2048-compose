@@ -2,12 +2,17 @@ package com.alexjlockwood.twentyfortyeight.viewmodel
 
 import androidx.annotation.IntRange
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.alexjlockwood.twentyfortyeight.domain.*
+import com.alexjlockwood.twentyfortyeight.domain.Cell
+import com.alexjlockwood.twentyfortyeight.domain.Direction
+import com.alexjlockwood.twentyfortyeight.domain.GridTile
+import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
+import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.google.android.material.math.MathUtils.floorMod
+import java.lang.Math.floorMod
 import kotlin.math.max
 
 const val GRID_SIZE = 4
@@ -22,13 +27,13 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
     private var grid: List<List<Tile?>> = EMPTY_GRID
     var gridTileMovements by mutableStateOf<List<GridTileMovement>>(listOf())
         private set
-    var currentScore by mutableStateOf(gameRepository.currentScore)
+    var currentScore by mutableIntStateOf(gameRepository.currentScore)
         private set
-    var bestScore by mutableStateOf(gameRepository.bestScore)
+    var bestScore by mutableIntStateOf(gameRepository.bestScore)
         private set
     var isGameOver by mutableStateOf(false)
         private set
-    var moveCount by mutableStateOf(0)
+    var moveCount by mutableIntStateOf(0)
         private set
 
     init {
@@ -38,15 +43,15 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         } else {
             // Restore a previously saved game.
             grid = savedGrid.map { tiles -> tiles.map { if (it == null) null else Tile(it) } }
-            gridTileMovements = savedGrid.flatMapIndexed { row, tiles ->
-                tiles.mapIndexed { col, it ->
-                    if (it == null) null else GridTileMovement.noop(GridTile(Cell(row, col), Tile(it)))
-                }
-            }.filterNotNull()
+            gridTileMovements = grid.toGridTileMovements()
             currentScore = gameRepository.currentScore
             bestScore = gameRepository.bestScore
-            isGameOver = checkIsGameOver(this.grid)
+            isGameOver = checkIsGameOver(grid)
         }
+    }
+
+    private fun save() {
+        if (!isGameOver) { gameRepository.saveState(grid, currentScore, bestScore) }
     }
 
     fun startNewGame() {
@@ -56,7 +61,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         currentScore = 0
         isGameOver = false
         moveCount = 0
-        gameRepository.saveState(grid, currentScore, bestScore)
+        save()
     }
 
     fun move(direction: Direction) {
@@ -68,7 +73,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         }
 
         // Increment the score.
-        val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumBy { it.toGridTile.tile.num }
+        val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
         currentScore += scoreIncrement
         bestScore = max(bestScore, currentScore)
 
@@ -81,11 +86,11 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
             updatedGridTileMovements.add(addedTileMovement)
         }
 
-        this.grid = updatedGrid
-        this.gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
-        this.isGameOver = checkIsGameOver(grid)
-        this.moveCount++
-        this.gameRepository.saveState(this.grid, this.currentScore, this.bestScore)
+        grid = updatedGrid
+        gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
+        isGameOver = checkIsGameOver(grid)
+        moveCount++
+        save()
     }
 }
 
@@ -111,7 +116,7 @@ private fun makeMove(grid: List<List<Tile?>>, direction: Direction): Pair<List<L
 
     val gridTileMovements = mutableListOf<GridTileMovement>()
 
-    updatedGrid = updatedGrid.mapIndexed { currentRowIndex, _ ->
+    updatedGrid = List(updatedGrid.size) { currentRowIndex ->
         val tiles = updatedGrid[currentRowIndex].toMutableList()
         var lastSeenTileIndex: Int? = null
         var lastSeenEmptyIndex: Int? = null
@@ -223,4 +228,12 @@ private fun hasGridChanged(gridTileMovements: List<GridTileMovement>): Boolean {
         val (fromTile, toTile) = it
         fromTile == null || fromTile.cell != toTile.cell
     }
+}
+
+private fun List<List<Tile?>>.toGridTileMovements(): List<GridTileMovement> {
+    return flatMapIndexed { row, tiles ->
+        tiles.mapIndexed { col, tile ->
+            GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
+        }
+    }.filterNotNull()
 }
