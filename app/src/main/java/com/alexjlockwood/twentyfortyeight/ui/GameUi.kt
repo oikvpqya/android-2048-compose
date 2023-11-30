@@ -3,6 +3,7 @@ package com.alexjlockwood.twentyfortyeight.ui
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -21,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.R
 import com.alexjlockwood.twentyfortyeight.domain.Direction
@@ -59,7 +61,7 @@ fun GameUi(
     modifier: Modifier = Modifier,
 ) {
     var shouldShowNewGameDialog by remember { mutableStateOf(false) }
-    var swipeAngle by remember { mutableFloatStateOf(0f) }
+    var swipeAngle by remember { mutableDoubleStateOf(0.0) }
     Scaffold(
         modifier = modifier.safeDrawingPadding(),
         topBar = {
@@ -99,7 +101,7 @@ fun GameUi(
                     )
                 },
             isPortrait = isPortrait,
-            gameGrid = { GameGrid(gridTileMovements, moveCount, isDarkTheme) },
+            gameGrid = { BoxWithConstraints { GameGrid(gridTileMovements, moveCount, isDarkTheme, gridSize = min(maxWidth, maxHeight)) } },
             currentScoreText = { TextLabel(text = "$currentScore", fontSize = 36.sp) },
             currentScoreLabel = { TextLabel(text = "Score", fontSize = 18.sp) },
             bestScoreText = { TextLabel(text = "$bestScore", fontSize = 36.sp) },
@@ -158,11 +160,15 @@ private fun GameLayout(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 16.dp, end = 16.dp)
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) { gameGrid() }
             Row(
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp).fillMaxWidth(),
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp)
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
@@ -181,7 +187,9 @@ private fun GameLayout(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 16.dp).fillMaxHeight(),
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.Center,
             ) { gameGrid() }
             Column {
@@ -194,7 +202,7 @@ private fun GameLayout(
     }
 }
 
-private fun calcDegree(x: Float, y: Float): Float = (atan2(y, x) * 180 / PI).toFloat().let { deg ->
-        if (deg < 0) { deg + 360 }
-        else { deg }
-    }
+private fun calcDegree(x: Float, y: Float): Double {
+    val deg = atan2(y, x) * 180 / PI
+    return if (deg < 0) deg + 360 else deg
+}

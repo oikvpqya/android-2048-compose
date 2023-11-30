@@ -5,8 +5,6 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.viewmodel.GRID_SIZE
 import kotlinx.coroutines.launch
-import kotlin.math.min
 
 /**
  * Renders a grid of tiles that animates when game moves are made.
@@ -41,66 +39,44 @@ fun GameGrid(
     moveCount: Int,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
+    gridSize: Dp = 320.dp,
     tileMargin: Dp = 4.dp,
     tileRadius: Dp = 4.dp,
 ) {
-    val density = LocalDensity.current
-    BoxWithConstraints(modifier = modifier.aspectRatio(1f)) {
-        val gridSizePx = with(density) { min(maxWidth.toPx(), maxHeight.toPx()) }
-        val tileMarginPx = with(density) { tileMargin.toPx() }
-        val tileSizePx = ((gridSizePx - tileMarginPx * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0f)
-        val tileSizeDp = with(density) { tileSizePx.toDp() }
-        val tileOffsetPx = tileSizePx + tileMarginPx
-        val emptyTileColor = getEmptyTileColor(isDarkTheme)
-        Box(
-            modifier = Modifier.drawBehind {
+    val tileSize = ((gridSize - tileMargin * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0.dp)
+    val tileOffset = with(LocalDensity.current) { (tileSize + tileMargin).toPx() }
+    Box(
+        modifier = modifier
+            .size(gridSize)
+            .drawBehind {
                 // Draw the background empty tiles.
                 for (row in 0 until GRID_SIZE) {
                     for (col in 0 until GRID_SIZE) {
                         drawRoundRect(
-                            color = emptyTileColor,
-                            topLeft = Offset(col * tileOffsetPx, row * tileOffsetPx),
-                            size = Size(tileSizePx, tileSizePx),
+                            color = getEmptyTileColor(isDarkTheme),
+                            topLeft = Offset(col * tileOffset, row * tileOffset),
+                            size = Size(tileSize.toPx(), tileSize.toPx()),
                             cornerRadius = CornerRadius(tileRadius.toPx()),
                         )
                     }
                 }
             }
-        ) {
-            for (gridTileMovement in gridTileMovements) {
-                // Each grid tile is laid out at (0,0) in the box. Shifting tiles are then translated
-                // to their correct position in the grid, and added tiles are scaled from 0 to 1.
-                val (fromGridTile, toGridTile) = gridTileMovement
-                val fromScale = if (fromGridTile == null) 0f else 1f
-                val toOffset = Offset(toGridTile.cell.col * tileOffsetPx, toGridTile.cell.row * tileOffsetPx)
-                val fromOffset = fromGridTile?.let { Offset(it.cell.col * tileOffsetPx, it.cell.row * tileOffsetPx) } ?: toOffset
-
-                // In 2048, tiles are frequently being removed and added to the grid. As a result,
-                // the order in which grid tiles are rendered is constantly changing after each
-                // recomposition. In order to ensure that each tile animates from its correct
-                // starting position, it is critical that we assign each tile a unique ID using
-                // the key() function.
-                key(toGridTile.tile.id) {
-                    val animatedScale = remember { Animatable(fromScale) }
-                    val animatedOffset = remember { Animatable(fromOffset, Offset.VectorConverter) }
-                    GridTileText(
-                        modifier = Modifier
-                            .graphicsLayer(
-                                scaleX = animatedScale.value,
-                                scaleY = animatedScale.value,
-                                translationX = animatedOffset.value.x,
-                                translationY = animatedOffset.value.y,
-                            ),
-                        num = toGridTile.tile.num,
-                        tileSize = tileSizeDp,
-                        tileRadius = tileRadius,
-                        tileColor = getTileColor(toGridTile.tile.num, isDarkTheme),
-                    )
-                    LaunchedEffect(moveCount) {
-                        launch { animatedScale.animateTo(1f, tween(200, 50)) }
-                        launch { animatedOffset.animateTo(toOffset, tween(100)) }
-                    }
-                }
+    ) {
+        for (gridTileMovement in gridTileMovements) {
+            val (num, id) = gridTileMovement.toGridTile.tile
+            // In 2048, tiles are frequently being removed and added to the grid. As a result,
+            // the order in which grid tiles are rendered is constantly changing after each
+            // recomposition. In order to ensure that each tile animates from its correct
+            // starting position, it is critical that we assign each tile a unique ID using
+            // the key() function.
+            key(id) {
+                GridTileText(
+                    modifier = Modifier.moveGridTile(tileOffset, moveCount, gridTileMovement),
+                    num = num,
+                    tileSize = tileSize,
+                    tileRadius = tileRadius,
+                    tileColor = getTileColor(num, isDarkTheme),
+                )
             }
         }
     }
@@ -149,4 +125,25 @@ private fun getTileColor(num: Int, isDarkTheme: Boolean): Color {
 
 private fun getEmptyTileColor(isDarkTheme: Boolean): Color {
     return Color(if (isDarkTheme) 0xff444444 else 0xffdddddd)
+}
+
+private fun Modifier.moveGridTile(offset: Float, moveCount: Int, gridTileMovement: GridTileMovement) = composed {
+    // Each grid tile is laid out at (0,0) in the box. Shifting tiles are then translated
+    // to their correct position in the grid, and added tiles are scaled from 0 to 1.
+    val (fromGridTile, toGridTile) = gridTileMovement
+    val fromScale = if (fromGridTile == null) 0f else 1f
+    val toOffset = with(toGridTile.cell) { Offset(col * offset, row * offset) }
+    val fromOffset = with(fromGridTile?.cell ?: toGridTile.cell) { Offset(col * offset, row * offset) }
+    val animatedScale = remember { Animatable(fromScale) }
+    val animatedOffset = remember { Animatable(fromOffset, Offset.VectorConverter) }
+    LaunchedEffect(moveCount) {
+        launch { animatedScale.animateTo(1f, tween(200, 50)) }
+        launch { animatedOffset.animateTo(toOffset, tween(100)) }
+    }
+    graphicsLayer(
+        scaleX = animatedScale.value,
+        scaleY = animatedScale.value,
+        translationX = animatedOffset.value.x,
+        translationY = animatedOffset.value.y,
+    )
 }
