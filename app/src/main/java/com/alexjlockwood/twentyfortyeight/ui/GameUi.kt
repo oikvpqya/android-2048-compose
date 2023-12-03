@@ -86,7 +86,7 @@ fun GameUi(
                     detectDragGestures(
                         onDrag = { change, dragAmount ->
                             change.consume()
-                            swipeAngle = calcDegree(dragAmount.x, -(dragAmount.y))
+                            swipeAngle = with(dragAmount) { (atan2(-y, x) * 180 / PI + 360) % 360 }
                         },
                         onDragEnd = {
                             onSwipeListener(
@@ -200,9 +200,4 @@ private fun GameLayout(
             }
         }
     }
-}
-
-private fun calcDegree(x: Float, y: Float): Double {
-    val deg = atan2(y, x) * 180 / PI
-    return if (deg < 0) deg + 360 else deg
 }

@@ -33,10 +33,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val gameRepository = GameRepository(this)
-            val gameViewModel = viewModel { GameViewModel(gameRepository) }
+            val gameViewModel = viewModel { GameViewModel(GameRepository(application)) }
             val isDarkTheme = isSystemInDarkTheme()
-            BackHandler(enabled = gameViewModel.canUndo) { gameViewModel.undo() }
+            BackHandler(gameViewModel.canUndo) { gameViewModel.undo() }
             AppTheme(isDarkTheme) {
                 Surface {
                     GameUi(
