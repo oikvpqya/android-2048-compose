@@ -253,7 +253,7 @@ private fun <T> List<List<T>>.map(transform: (row: Int, col: Int, T) -> T): List
 
 private fun checkIsGameOver(grid: List<List<Tile?>>): Boolean {
     // The game is over if no tiles can be moved in any of the 4 directions.
-    return Direction.values().none { hasGridChanged(makeMove(grid, it).second) }
+    return Direction.entries.toList().none { hasGridChanged(makeMove(grid, it).second) }
 }
 
 private fun hasGridChanged(gridTileMovements: List<GridTileMovement>): Boolean {
