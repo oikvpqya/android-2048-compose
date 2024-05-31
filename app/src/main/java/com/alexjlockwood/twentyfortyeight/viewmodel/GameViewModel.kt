@@ -6,12 +6,15 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTile
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.lang.Math.floorMod
 import kotlin.math.max
 
@@ -27,9 +30,9 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
     private var grid: List<List<Tile?>> = EMPTY_GRID
     var gridTileMovements by mutableStateOf<List<GridTileMovement>>(listOf())
         private set
-    var currentScore by mutableIntStateOf(gameRepository.currentScore)
+    var currentScore by mutableIntStateOf(0)
         private set
-    var bestScore by mutableIntStateOf(gameRepository.bestScore)
+    var bestScore by mutableIntStateOf(0)
         private set
     var isGameOver by mutableStateOf(false)
         private set
@@ -42,21 +45,27 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
     private val stack = ArrayDeque(listOf<Stack>())
 
     init {
-        val savedGrid = gameRepository.grid
-        if (savedGrid == null) {
-            startNewGame()
-        } else {
-            // Restore a previously saved game.
-            grid = savedGrid.map { tiles -> tiles.map { if (it == null) null else Tile(it) } }
-            gridTileMovements = grid.toGridTileMovements()
-            currentScore = gameRepository.currentScore
-            bestScore = gameRepository.bestScore
-            isGameOver = checkIsGameOver(grid)
+        viewModelScope.launch {
+            val userData = gameRepository.userDataFlow.first()
+            bestScore = userData.bestScore
+            if (userData.grid == null) {
+                startNewGame()
+            } else {
+                // Restore a previously saved game.
+                grid = userData.grid
+                gridTileMovements = userData.grid.toGridTileMovements()
+                currentScore = userData.currentScore
+                isGameOver = checkIsGameOver(grid)
+            }
         }
     }
 
     private fun save() {
-        if (!isGameOver) { gameRepository.saveState(grid, currentScore, bestScore) }
+        viewModelScope.launch {
+            if (!isGameOver) {
+                gameRepository.saveState(grid, currentScore, bestScore)
+            }
+        }
     }
 
     fun startNewGame() {
@@ -244,7 +253,7 @@ private fun <T> List<List<T>>.map(transform: (row: Int, col: Int, T) -> T): List
 
 private fun checkIsGameOver(grid: List<List<Tile?>>): Boolean {
     // The game is over if no tiles can be moved in any of the 4 directions.
-    return Direction.values().none { hasGridChanged(makeMove(grid, it).second) }
+    return Direction.entries.toList().none { hasGridChanged(makeMove(grid, it).second) }
 }
 
 private fun hasGridChanged(gridTileMovements: List<GridTileMovement>): Boolean {
