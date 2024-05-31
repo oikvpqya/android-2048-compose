@@ -1,39 +1,51 @@
 package com.alexjlockwood.twentyfortyeight.repository
 
 import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.alexjlockwood.twentyfortyeight.domain.Tile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-private const val KEY_SHARED_PREFS = "key_shared_prefs"
-private const val KEY_GRID = "key_grid"
-private const val KEY_CURRENT_SCORE = "key_current_score"
-private const val KEY_BEST_SCORE = "key_best_score"
+private val Context.dataStore by preferencesDataStore(name = "preferences")
+private val KEY_GRID = stringPreferencesKey("grid")
+private val KEY_CURRENT_SCORE = intPreferencesKey("current_score")
+private val KEY_BEST_SCORE = intPreferencesKey("best_score")
+
+data class UserData (
+    val grid: List<List<Tile?>>?,
+    val currentScore: Int,
+    val bestScore: Int
+)
 
 /**
- * Repository class that persists the current 2048 game to shared preferences.
+ * Repository class that persists the current 2048 game to DataStore.
  */
-class GameRepository(context: Context) {
+class GameRepository(private val context: Context) {
 
-    private val sharedPrefs = context.getSharedPreferences(KEY_SHARED_PREFS, Context.MODE_PRIVATE)
+    val userDataFlow: Flow<UserData> = context.dataStore.data
+        .map { preferences ->
+            val grid = preferences[KEY_GRID]
+                ?.let {
+                    Json.decodeFromString<List<List<Int?>>?>(it)
+                }
+                ?.map { tiles ->
+                    tiles.map { if (it == null) null else Tile(it) }
+                }
+            val currentScore = preferences[KEY_CURRENT_SCORE] ?: 0
+            val bestScore = preferences[KEY_BEST_SCORE] ?: 0
+            UserData(grid, currentScore, bestScore)
+        }
 
-    var grid: List<List<Int?>>? = sharedPrefs.getString(KEY_GRID, null)?.let { Json.decodeFromString(it) }
-        private set
-
-    var currentScore: Int = sharedPrefs.getInt(KEY_CURRENT_SCORE, 0)
-        private set
-
-    var bestScore: Int = sharedPrefs.getInt(KEY_BEST_SCORE, 0)
-        private set
-
-    fun saveState(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int) {
-        this.grid = grid.map { tiles -> tiles.map { it?.num } }
-        this.currentScore = currentScore
-        this.bestScore = bestScore
-        sharedPrefs.edit()
-            .putString(KEY_GRID, Json.encodeToString(this.grid))
-            .putInt(KEY_CURRENT_SCORE, currentScore)
-            .putInt(KEY_BEST_SCORE, bestScore)
-            .apply()
+    suspend fun saveState(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_GRID] = Json.encodeToString(grid.map { tiles -> tiles.map { it?.num } })
+            preferences[KEY_CURRENT_SCORE] = currentScore
+            preferences[KEY_BEST_SCORE] = bestScore
+        }
     }
 }
