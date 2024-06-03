@@ -7,22 +7,24 @@ import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.Surface
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.ui.AppTheme
-import com.alexjlockwood.twentyfortyeight.ui.GameUi
-import com.alexjlockwood.twentyfortyeight.viewmodel.GameViewModel
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
+import okio.Path.Companion.toPath
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val dataStore = PreferenceDataStoreFactory.createWithPath(
+            corruptionHandler = null,
+            migrations = emptyList(),
+            produceFile = { application.filesDir.resolve(USER_DATA_FILE_NAME).absolutePath.toPath() },
+        )
+
         if (VERSION.SDK_INT < VERSION_CODES.O) {
             enableEdgeToEdge()
         } else SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT).also {
@@ -33,26 +35,10 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val gameViewModel = viewModel { GameViewModel(GameRepository(application)) }
-            val isDarkTheme = isSystemInDarkTheme()
-            BackHandler(gameViewModel.canUndo) { gameViewModel.undo() }
-            AppTheme(isDarkTheme) {
-                Surface {
-                    GameUi(
-                        gridTileMovements = gameViewModel.gridTileMovements,
-                        currentScore = gameViewModel.currentScore,
-                        bestScore = gameViewModel.bestScore,
-                        moveCount = gameViewModel.moveCount,
-                        canUndo = gameViewModel.canUndo,
-                        isGameOver = gameViewModel.isGameOver,
-                        isDarkTheme = isDarkTheme,
-                        isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT,
-                        onNewGameRequested = { gameViewModel.startNewGame() },
-                        onUndoGameRequested = { gameViewModel.undo() },
-                        onSwipeListener = { direction -> gameViewModel.move(direction) },
-                    )
-                }
-            }
+            App(
+                dataStore = dataStore,
+                isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+            )
         }
     }
 }
