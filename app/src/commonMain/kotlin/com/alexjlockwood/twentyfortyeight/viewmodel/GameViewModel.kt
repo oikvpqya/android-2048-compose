@@ -15,7 +15,6 @@ import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.lang.Math.floorMod
 import kotlin.math.max
 
 const val GRID_SIZE = 4
@@ -225,7 +224,7 @@ private fun makeMove(grid: List<List<Tile?>>, direction: Direction): Pair<List<L
     }
 
     // Rotate the grid back to its original state.
-    updatedGrid = updatedGrid.rotate(floorMod(-numRotations, GRID_SIZE))
+    updatedGrid = updatedGrid.rotate((-numRotations).floorMod(Direction.entries.size))
 
     return Pair(updatedGrid, gridTileMovements)
 }
@@ -270,4 +269,9 @@ private fun List<List<Tile?>>.toGridTileMovements(): List<GridTileMovement> {
             GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
         }
     }.filterNotNull()
+}
+
+private fun Int.floorMod(other: Int): Int {
+    val mod = this % other
+    return if ((mod xor other) < 0 && mod != 0) mod + other else mod
 }
