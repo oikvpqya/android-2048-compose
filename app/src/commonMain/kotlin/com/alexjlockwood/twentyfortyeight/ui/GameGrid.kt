@@ -10,22 +10,25 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.viewmodel.GRID_SIZE
 import kotlinx.coroutines.launch
@@ -36,7 +39,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun GameGrid(
     gridTileMovements: List<GridTileMovement>,
-    moveCount: Int,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
     gridSize: Dp = 320.dp,
@@ -71,7 +73,7 @@ fun GameGrid(
             // the key() function.
             key(id) {
                 GridTileText(
-                    modifier = Modifier.moveGridTile(tileOffset, moveCount, gridTileMovement),
+                    modifier = Modifier.moveGridTile(gridTileMovement, tileOffset),
                     num = num,
                     tileSize = tileSize,
                     tileRadius = tileRadius,
@@ -127,23 +129,65 @@ private fun getEmptyTileColor(isDarkTheme: Boolean): Color {
     return Color(if (isDarkTheme) 0xff444444 else 0xffdddddd)
 }
 
-private fun Modifier.moveGridTile(offset: Float, moveCount: Int, gridTileMovement: GridTileMovement) = composed {
+private fun Modifier.moveGridTile(gridTileMovement: GridTileMovement, offset: Float): Modifier {
+    return this then MoveGridTileElement(gridTileMovement, offset)
+}
+
+private data class MoveGridTileElement(
+    val gridTileMovement: GridTileMovement,
+    val offset: Float
+) : ModifierNodeElement<MoveGridTileNode>() {
+
+    override fun create(): MoveGridTileNode = MoveGridTileNode(gridTileMovement, offset)
+
+    override fun update(node: MoveGridTileNode) {
+        node.update(gridTileMovement.toGridTile.cell, offset)
+    }
+}
+
+private class MoveGridTileNode(
+    gridTileMovement: GridTileMovement,
+    offset: Float
+) : LayoutModifierNode, Modifier.Node() {
+
     // Each grid tile is laid out at (0,0) in the box. Shifting tiles are then translated
     // to their correct position in the grid, and added tiles are scaled from 0 to 1.
-    val (fromGridTile, toGridTile) = gridTileMovement
-    val fromScale = if (fromGridTile == null) 0f else 1f
-    val toOffset = with(toGridTile.cell) { Offset(col * offset, row * offset) }
-    val fromOffset = with(fromGridTile?.cell ?: toGridTile.cell) { Offset(col * offset, row * offset) }
-    val animatedScale = remember { Animatable(fromScale) }
-    val animatedOffset = remember { Animatable(fromOffset, Offset.VectorConverter) }
-    LaunchedEffect(moveCount) {
-        launch { animatedScale.animateTo(1f, tween(200, 50)) }
-        launch { animatedOffset.animateTo(toOffset, tween(100)) }
+    val initialCell = with(gridTileMovement) { fromGridTile?.cell ?: toGridTile.cell }
+    var currentOffset = with(initialCell) { Offset(col * offset, row * offset) }
+    val animatedOffset = Animatable(currentOffset, Offset.VectorConverter)
+    val animatedScale = Animatable(if (gridTileMovement.fromGridTile == null) 0f else 1f)
+
+    override fun onAttach() {
+        move(currentOffset)
     }
-    graphicsLayer(
-        scaleX = animatedScale.value,
-        scaleY = animatedScale.value,
-        translationX = animatedOffset.value.x,
-        translationY = animatedOffset.value.y,
-    )
+
+    private fun move(targetOffset: Offset) {
+        currentOffset = targetOffset
+        coroutineScope.apply {
+            launch { animatedOffset.animateTo(targetOffset, tween(100)) }
+            launch { animatedScale.animateTo(1f, tween(200, 50)) }
+        }
+    }
+
+    fun update(cell: Cell, offset: Float) {
+        val targetOffset = with(cell) { Offset(col * offset, row * offset) }
+        if (currentOffset != targetOffset) {
+            move(targetOffset)
+        }
+    }
+
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val placeable = measurable.measure(constraints)
+        return layout(placeable.width, placeable.height) {
+            placeable.placeWithLayer(
+                x = 0,
+                y = 0
+            ) {
+                scaleX = animatedScale.value
+                scaleY = animatedScale.value
+                translationX = animatedOffset.value.x
+                translationY = animatedOffset.value.y
+            }
+        }
+    }
 }
