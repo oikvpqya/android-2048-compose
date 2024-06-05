@@ -48,7 +48,6 @@ fun GameUi(
     gridTileMovements: List<GridTileMovement>,
     currentScore: Int,
     bestScore: Int,
-    moveCount: Int,
     canUndo: Boolean,
     isGameOver: Boolean,
     isDarkTheme: Boolean,
@@ -57,6 +56,7 @@ fun GameUi(
     onUndoGameRequested: () -> Unit,
     onSwipeListener: (direction: Direction) -> Unit,
     modifier: Modifier = Modifier,
+    moveCount: Int = 0, // TODO: currently unused.
 ) {
     var shouldShowNewGameDialog by remember { mutableStateOf(false) }
     var swipeAngle by remember { mutableDoubleStateOf(0.0) }
@@ -99,7 +99,7 @@ fun GameUi(
                     )
                 },
             isPortrait = isPortrait,
-            gameGrid = { BoxWithConstraints { GameGrid(gridTileMovements, moveCount, isDarkTheme, gridSize = min(maxWidth, maxHeight)) } },
+            gameGrid = { BoxWithConstraints { GameGrid(gridTileMovements, isDarkTheme, gridSize = min(maxWidth, maxHeight)) } },
             currentScoreText = { TextLabel(text = "$currentScore", fontSize = 36.sp) },
             currentScoreLabel = { TextLabel(text = "Score", fontSize = 18.sp) },
             bestScoreText = { TextLabel(text = "$bestScore", fontSize = 36.sp) },
