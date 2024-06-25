@@ -13,6 +13,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -38,8 +39,10 @@ fun GameUi(
     gridTileMovements: List<GridTileMovement>,
     currentScore: Int,
     bestScore: Int,
+    canUndo: Boolean,
     isGameOver: Boolean,
     onNewGameRequested: () -> Unit,
+    onUndoGameRequested: () -> Unit,
     onSwipeListener: (direction: Direction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -53,8 +56,13 @@ fun GameUi(
                 contentColor = Color.White,
                 backgroundColor = MaterialTheme.colors.primaryVariant,
                 actions = {
-                    IconButton(onClick = { shouldShowNewGameDialog = true }) { Icon(Icons.Filled.Add, contentDescription = null) }
-                }
+                    IconButton(onClick = { onUndoGameRequested() }, enabled = canUndo) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    }
+                    IconButton(onClick = { shouldShowNewGameDialog = true }) {
+                        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+                    }
+                },
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -97,6 +105,7 @@ fun GameUi(
             onConfirmListener = { onNewGameRequested() },
             onDismissListener = {
                 // TODO: allow user to dismiss the dialog so they can take a screenshot
+                onUndoGameRequested()
             },
         )
     } else if (shouldShowNewGameDialog) {
