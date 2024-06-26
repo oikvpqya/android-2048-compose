@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
-import com.alexjlockwood.twentyfortyeight.viewmodel.GRID_SIZE
+import com.alexjlockwood.twentyfortyeight.presenter.GRID_SIZE
 
 /**
  * Renders a grid of tiles that animates when game moves are made.

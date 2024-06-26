@@ -4,17 +4,17 @@ androidxActivity = "1.9.0"
 androidxCore = "1.13.1"
 harawataAppdirs = "1.2.2"
 jetbrainsCompose = "1.6.11"
-jetbrainsLifecycle = "2.8.0"
 kotlin = "2.0.0"
 kotlinxCoroutines = "1.8.1"
 kotlinxSerialization = "1.7.0"
+slackCircuit = "0.22.2"
 squareupOkio = "3.9.0"
 xxfastKstore = "0.8.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
-androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
+circuit-foundation = { module = "com.slack.circuit:circuit-foundation", version.ref = "slackCircuit" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -30,4 +30,5 @@ android-application = { id = "com.android.application", version.ref = "androidGr
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -27,14 +27,32 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
+import com.alexjlockwood.twentyfortyeight.presenter.GameScreen
 import kotlin.math.PI
 import kotlin.math.atan2
+
+@Composable
+fun GameUiRoot(
+    state: GameScreen.State,
+    modifier: Modifier = Modifier,
+) {
+    val eventSink = state.eventSink
+    GameUi(
+        gridTileMovements = state.gridTileMovements,
+        currentScore = state.currentScore,
+        bestScore = state.currentScore,
+        isGameOver = state.isGameOver,
+        onNewGameRequested = { eventSink(GameScreen.Event.StartNewGame) },
+        onSwipeListener = { direction -> eventSink(GameScreen.Event.Move(direction)) },
+        modifier = modifier,
+    )
+}
 
 /**
  * Renders the 2048 game's home screen UI.
  */
 @Composable
-fun GameUi(
+private fun GameUi(
     gridTileMovements: List<GridTileMovement>,
     currentScore: Int,
     bestScore: Int,

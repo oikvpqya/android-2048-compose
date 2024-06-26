@@ -2,24 +2,18 @@ package com.alexjlockwood.twentyfortyeight
 
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.AppTheme
-import com.alexjlockwood.twentyfortyeight.ui.GameUi
-import com.alexjlockwood.twentyfortyeight.viewmodel.GameViewModel
+import com.slack.circuit.backstack.SaveableBackStack
+import com.slack.circuit.foundation.NavigableCircuitContent
+import com.slack.circuit.runtime.Navigator
 
 @Composable
-fun App(repository: GameRepository) {
-    val gameViewModel = viewModel { GameViewModel(repository) }
+fun App(backStack: SaveableBackStack, navigator: Navigator) {
     AppTheme {
         Surface {
-            GameUi(
-                gridTileMovements = gameViewModel.gridTileMovements,
-                currentScore = gameViewModel.currentScore,
-                bestScore = gameViewModel.bestScore,
-                isGameOver = gameViewModel.isGameOver,
-                onNewGameRequested = { gameViewModel.startNewGame() },
-                onSwipeListener = { direction -> gameViewModel.move(direction) },
+            NavigableCircuitContent(
+                navigator = navigator,
+                backStack = backStack,
             )
         }
     }
