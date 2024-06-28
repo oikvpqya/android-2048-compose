@@ -1,5 +1,6 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -12,6 +13,7 @@ import kotlinx.serialization.encoding.Encoder
 /**
  * Container class that wraps a number and a unique ID for use in the grid.
  */
+@Immutable
 @Serializable(TileSerializer::class)
 data class Tile(
     val num: Int,

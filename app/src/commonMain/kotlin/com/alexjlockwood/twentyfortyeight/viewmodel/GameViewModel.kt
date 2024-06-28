@@ -13,21 +13,24 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTile
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.random.Random
 
 const val GRID_SIZE = 4
 private const val NUM_INITIAL_TILES = 2
-private val EMPTY_GRID = (0 until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
+private val EMPTY_GRID = List(GRID_SIZE) { List<Tile?>(GRID_SIZE) { null } }
 
 /**
  * View model class that contains the logic that powers the 2048 game.
  */
 class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
 
-    private var grid: List<List<Tile?>> = EMPTY_GRID
-    var gridTileMovements by mutableStateOf<List<GridTileMovement>>(listOf())
+    private var grid = EMPTY_GRID
+    var gridTileMovements: ImmutableList<GridTileMovement> by mutableStateOf(persistentListOf())
         private set
     var currentScore by mutableIntStateOf(0)
         private set
@@ -48,12 +51,9 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
                 // Restore a previously saved game.
                 grid = userData.grid
                 gridTileMovements = userData.grid
-                    .flatMapIndexed { row, tiles ->
-                        tiles.mapIndexed { col, tile ->
-                            GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
-                        }
-                    }
+                    .flatMap { row, col, tile -> if (tile != null) GridTileMovement.noop(GridTile(Cell(row, col), tile)) else null }
                     .filterNotNull()
+                    .toImmutableList()
                 currentScore = userData.currentScore
                 isGameOver = checkIsGameOver(grid)
             }
@@ -69,7 +69,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
     }
 
     fun startNewGame() {
-        gridTileMovements = (0 until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
+        gridTileMovements = List(NUM_INITIAL_TILES) { createRandomAddedTile(EMPTY_GRID) }.filterNotNull().toImmutableList()
         val addedGridTiles = gridTileMovements.map { it.toGridTile }
         grid = EMPTY_GRID.map { row, col, _ -> addedGridTiles.find { row == it.cell.row && col == it.cell.col }?.tile }
         currentScore = 0
@@ -101,7 +101,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         }
 
         grid = updatedGrid
-        gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
+        gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }.toImmutableList()
         isGameOver = checkIsGameOver(grid)
         moveCount++
         save()
@@ -109,9 +109,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
 }
 
 private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {
-    val emptyCells = grid.flatMapIndexed { row, tiles ->
-        tiles.mapIndexed { col, it -> if (it == null) Cell(row, col) else null }.filterNotNull()
-    }
+    val emptyCells = grid.flatMap { row, col, tile -> if (tile == null) Cell(row, col) else null }.filterNotNull()
     val emptyCell = emptyCells.getOrNull(emptyCells.indices.random()) ?: return null
     return GridTileMovement.add(GridTile(emptyCell, if (Random.nextFloat() < 0.9f) Tile(2) else Tile(4)))
 }
@@ -228,7 +226,11 @@ private fun getRotatedCellAt(row: Int, col: Int, @IntRange(from = 0, to = 3) num
 }
 
 private fun <T> List<List<T>>.map(transform: (row: Int, col: Int, T) -> T): List<List<T>> {
-    return mapIndexed { row, rowTiles -> rowTiles.mapIndexed { col, it -> transform(row, col, it) } }
+    return mapIndexed { row, items -> items.mapIndexed { col, item -> transform(row, col, item) } }
+}
+
+private fun <T, U> List<List<T>>.flatMap(transform: (row: Int, col: Int, T) -> U): List<U> {
+    return flatMapIndexed { row, items -> items.mapIndexed { col, item -> transform(row, col, item) } }
 }
 
 private fun checkIsGameOver(grid: List<List<Tile?>>): Boolean {

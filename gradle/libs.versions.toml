@@ -6,6 +6,7 @@ harawataAppdirs = "1.2.2"
 jetbrainsCompose = "1.6.11"
 jetbrainsLifecycle = "2.8.0"
 kotlin = "2.0.0"
+kotlinxCollectionsImmutable = "0.3.7"
 kotlinxCoroutines = "1.8.1"
 kotlinxSerialization = "1.7.0"
 squareupOkio = "3.9.0"
@@ -16,6 +17,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
 androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }

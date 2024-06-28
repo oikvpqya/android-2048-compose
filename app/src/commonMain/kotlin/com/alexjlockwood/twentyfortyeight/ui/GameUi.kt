@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.PI
 import kotlin.math.atan2
 
@@ -35,7 +36,7 @@ import kotlin.math.atan2
  */
 @Composable
 fun GameUi(
-    gridTileMovements: List<GridTileMovement>,
+    gridTileMovements: ImmutableList<GridTileMovement>,
     currentScore: Int,
     bestScore: Int,
     isGameOver: Boolean,

@@ -1,8 +1,11 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Container class describing how a tile has moved within the grid.
  */
+@Immutable
 data class GridTileMovement(val fromGridTile: GridTile?, val toGridTile: GridTile) {
     companion object {
         /**

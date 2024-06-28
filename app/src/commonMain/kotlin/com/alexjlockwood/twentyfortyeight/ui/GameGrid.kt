@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -22,21 +23,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.viewmodel.GRID_SIZE
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * Renders a grid of tiles that animates when game moves are made.
  */
 @Composable
 fun GameGrid(
-    gridTileMovements: List<GridTileMovement>,
+    gridTileMovements: ImmutableList<GridTileMovement>,
     modifier: Modifier = Modifier,
     gridSize: Dp = 320.dp,
     tileMargin: Dp = 4.dp,
     tileRadius: Dp = 4.dp,
+    isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
-    val tileSize = ((gridSize - tileMargin * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0.dp)
-    val tileOffset = with(LocalDensity.current) { (tileSize + tileMargin).toPx() }
-    val emptyTileColor = getEmptyTileColor(isSystemInDarkTheme())
+    val tileSize = remember(gridSize, tileMargin) { ((gridSize - tileMargin * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0.dp) }
+    val tileOffset = with(LocalDensity.current) { remember(gridSize, tileMargin) { (tileSize + tileMargin).toPx() } }
+    val emptyTileColor = remember(isDarkTheme) { getEmptyTileColor(isDarkTheme) }
     Box(
         modifier = modifier
             .size(gridSize)
@@ -67,7 +70,7 @@ fun GameGrid(
                     num = num,
                     tileSize = tileSize,
                     tileRadius = tileRadius,
-                    tileColor = getTileColor(num, isSystemInDarkTheme()),
+                    tileColor = getTileColor(num, isDarkTheme),
                 )
             }
         }
