@@ -37,6 +37,11 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         private set
     var moveCount by mutableIntStateOf(0) // TODO: unused.
         private set
+    var canUndo by mutableStateOf(false)
+        private set
+
+    data class Stack(val grid: List<List<Tile?>>, val currentScore: Int, val bestScore: Int)
+    private val stack = ArrayDeque(listOf<Stack>())
 
     init {
         viewModelScope.launch {
@@ -47,13 +52,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
             } else {
                 // Restore a previously saved game.
                 grid = userData.grid
-                gridTileMovements = userData.grid
-                    .flatMapIndexed { row, tiles ->
-                        tiles.mapIndexed { col, tile ->
-                            GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
-                        }
-                    }
-                    .filterNotNull()
+                gridTileMovements = userData.grid.toGridTileMovements()
                 currentScore = userData.currentScore
                 isGameOver = checkIsGameOver(grid)
             }
@@ -75,6 +74,8 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         currentScore = 0
         isGameOver = false
         moveCount = 0
+        stack.clear()
+        canUndo = false
         save()
     }
 
@@ -85,6 +86,9 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
             // No tiles were moved.
             return
         }
+
+        // Push game data to stack.
+        stack.add(Stack(grid, currentScore, bestScore))
 
         // Increment the score.
         val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
@@ -104,6 +108,21 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
         isGameOver = checkIsGameOver(grid)
         moveCount++
+        canUndo = true
+        save()
+    }
+
+    fun undo() {
+        require(canUndo)
+        // Pop and restore game from stack.
+        val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeLast()
+        grid = updatedGrid
+        gridTileMovements = grid.toGridTileMovements()
+        currentScore = updatedCurrentScore
+        bestScore = updatedBestScore
+        isGameOver = checkIsGameOver(grid)
+        moveCount--
+        canUndo = stack.isNotEmpty()
         save()
     }
 }
@@ -247,4 +266,12 @@ private fun hasGridChanged(gridTileMovements: List<GridTileMovement>): Boolean {
 private fun Int.floorMod(other: Int): Int {
     val mod = this % other
     return if ((mod xor other) < 0 && mod != 0) mod + other else mod
+}
+
+private fun List<List<Tile?>>.toGridTileMovements(): List<GridTileMovement> {
+    return flatMapIndexed { row, tiles ->
+        tiles.mapIndexed { col, tile ->
+            GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
+        }
+    }.filterNotNull()
 }
