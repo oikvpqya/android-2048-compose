@@ -1,19 +1,24 @@
-package com.alexjlockwood.twentyfortyeight.viewmodel
+package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.annotation.IntRange
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTile
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
+import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import io.github.takahirom.rin.rememberRetained
+import io.github.takahirom.rin.produceRetainedState
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -21,49 +26,42 @@ const val GRID_SIZE = 4
 private const val NUM_INITIAL_TILES = 2
 private val EMPTY_GRID = (0 until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
 
+sealed interface GameUiEvent {
+    data class Move(val direction: Direction) : GameUiEvent
+    data object StartNewGame : GameUiEvent
+    data object Undo : GameUiEvent
+}
+
+data class GameUiState(
+    val gridTileMovements: List<GridTileMovement>,
+    val currentScore: Int,
+    val bestScore: Int,
+    val isGameOver: Boolean,
+    val canUndo: Boolean,
+)
+
 /**
- * View model class that contains the logic that powers the 2048 game.
+ * Presenter that contains the logic that powers the 2048 game.
  */
-class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
+@Composable
+fun gamePresenter(
+    eventFlow: Flow<GameUiEvent>,
+    gameRepository: GameRepository,
+): GameUiState {
+    var grid by rememberRetained { mutableStateOf(EMPTY_GRID) }
+    var gridTileMovements by rememberRetained { mutableStateOf(emptyList<GridTileMovement>()) }
+    var currentScore by rememberRetained { mutableIntStateOf(0) }
+    var bestScore by rememberRetained { mutableIntStateOf(0) }
+    var isGameOver by rememberRetained { mutableStateOf(false) }
+    var moveCount by rememberRetained { mutableIntStateOf(0) } // TODO: unused.
+    var canUndo by rememberRetained { mutableStateOf(false) }
+    val stack by rememberRetained { mutableStateOf(ArrayDeque<UserData>(emptyList())) }
 
-    private var grid: List<List<Tile?>> = EMPTY_GRID
-    var gridTileMovements by mutableStateOf<List<GridTileMovement>>(listOf())
-        private set
-    var currentScore by mutableIntStateOf(0)
-        private set
-    var bestScore by mutableIntStateOf(0)
-        private set
-    var isGameOver by mutableStateOf(false)
-        private set
-    var moveCount by mutableIntStateOf(0) // TODO: unused.
-        private set
-    var canUndo by mutableStateOf(false)
-        private set
+    val userData by produceRetainedState<UserData?>(initialValue = null) { value = gameRepository.fetch() }
 
-    data class Stack(val grid: List<List<Tile?>>, val currentScore: Int, val bestScore: Int)
-    private val stack = ArrayDeque(listOf<Stack>())
-
-    init {
-        viewModelScope.launch {
-            val userData = gameRepository.fetch()
-            bestScore = userData.bestScore
-            if (userData.grid == null) {
-                startNewGame()
-            } else {
-                // Restore a previously saved game.
-                grid = userData.grid
-                gridTileMovements = userData.grid.toGridTileMovements()
-                currentScore = userData.currentScore
-                isGameOver = checkIsGameOver(grid)
-            }
-        }
-    }
-
-    private fun save() {
-        viewModelScope.launch {
-            if (!isGameOver) {
-                gameRepository.update(grid, currentScore, bestScore)
-            }
+    suspend fun save() {
+        if (!isGameOver) {
+            gameRepository.update(grid, currentScore, bestScore)
         }
     }
 
@@ -76,7 +74,6 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         moveCount = 0
         stack.clear()
         canUndo = false
-        save()
     }
 
     fun move(direction: Direction) {
@@ -88,7 +85,7 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         }
 
         // Push game data to stack.
-        stack.add(Stack(grid, currentScore, bestScore))
+        stack.add(UserData(grid, currentScore, bestScore))
 
         // Increment the score.
         val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
@@ -109,22 +106,66 @@ class GameViewModel(private val gameRepository: GameRepository) : ViewModel() {
         isGameOver = checkIsGameOver(grid)
         moveCount++
         canUndo = true
-        save()
     }
 
     fun undo() {
         require(canUndo)
         // Pop and restore game from stack.
         val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeLast()
-        grid = updatedGrid
+        grid = updatedGrid ?: EMPTY_GRID
         gridTileMovements = grid.toGridTileMovements()
         currentScore = updatedCurrentScore
         bestScore = updatedBestScore
         isGameOver = checkIsGameOver(grid)
         moveCount--
         canUndo = stack.isNotEmpty()
-        save()
     }
+
+    suspend fun eventSink(event: GameUiEvent) {
+        when (event) {
+            is GameUiEvent.Move -> {
+                move(event.direction)
+                save()
+            }
+            GameUiEvent.StartNewGame -> {
+                startNewGame()
+                save()
+            }
+            GameUiEvent.Undo -> {
+                undo()
+                save()
+            }
+        }
+    }
+
+    LaunchedEffect(eventFlow) {
+        supervisorScope {
+            eventFlow.collect { event ->
+                launch {
+                    eventSink(event)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(userData) {
+        if (grid == EMPTY_GRID) {
+            userData?.let { currentUserData ->
+                bestScore = currentUserData.bestScore
+                if (currentUserData.grid == null) {
+                    startNewGame()
+                } else {
+                    // Restore a previously saved game.
+                    grid = currentUserData.grid
+                    gridTileMovements = currentUserData.grid.toGridTileMovements()
+                    currentScore = currentUserData.currentScore
+                    isGameOver = checkIsGameOver(grid)
+                }
+            }
+        }
+    }
+
+    return GameUiState(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
 }
 
 private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {
