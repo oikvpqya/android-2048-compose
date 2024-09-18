@@ -28,6 +28,7 @@ kotlin {
             dependencies {
                 implementation compose.material
                 implementation compose.ui
+                implementation libs.jetbrains.androidx.lifecycle.runtime.compose
                 implementation libs.jetbrains.androidx.lifecycle.viewmodel.compose
                 implementation libs.kotlinx.coroutines.core
                 implementation libs.kotlinx.serialization.json

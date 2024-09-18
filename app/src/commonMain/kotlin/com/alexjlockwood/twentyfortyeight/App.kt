@@ -2,28 +2,32 @@ package com.alexjlockwood.twentyfortyeight
 
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.remember
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.AppTheme
 import com.alexjlockwood.twentyfortyeight.ui.BackHandler
+import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUi
-import com.alexjlockwood.twentyfortyeight.viewmodel.GameViewModel
+import com.alexjlockwood.twentyfortyeight.ui.gamePresenter
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun App(repository: GameRepository) {
-    val gameViewModel = viewModel { GameViewModel(repository) }
-    BackHandler(gameViewModel.canUndo) { gameViewModel.undo() }
+    val eventFlow = remember { MutableSharedFlow<GameUiEvent>(extraBufferCapacity = 20) }
+    val uiState = gamePresenter(eventFlow, repository)
+
+    BackHandler(uiState.canUndo) { eventFlow.tryEmit(GameUiEvent.Undo) }
     AppTheme {
         Surface {
             GameUi(
-                gridTileMovements = gameViewModel.gridTileMovements,
-                currentScore = gameViewModel.currentScore,
-                bestScore = gameViewModel.bestScore,
-                canUndo = gameViewModel.canUndo,
-                isGameOver = gameViewModel.isGameOver,
-                onNewGameRequested = { gameViewModel.startNewGame() },
-                onUndoGameRequested = { gameViewModel.undo() },
-                onSwipeListener = { direction -> gameViewModel.move(direction) },
+                gridTileMovements = uiState.gridTileMovements,
+                currentScore = uiState.currentScore,
+                bestScore = uiState.bestScore,
+                canUndo = uiState.canUndo,
+                isGameOver = uiState.isGameOver,
+                onNewGameRequested = { eventFlow.tryEmit(GameUiEvent.StartNewGame) },
+                onUndoGameRequested = { eventFlow.tryEmit(GameUiEvent.Undo) },
+                onSwipeListener = { eventFlow.tryEmit(GameUiEvent.Move(it)) },
             )
         }
     }
