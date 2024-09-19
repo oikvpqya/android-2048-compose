@@ -48,6 +48,9 @@ fun gamePresenter(
     eventFlow: Flow<GameUiEvent>,
     gameRepository: GameRepository,
 ): GameUiState {
+    val userData by produceRetainedState<UserData?>(initialValue = null) { value = gameRepository.fetch() }
+    userData ?: return GameUiState(emptyList(), 0, 0, false, false)
+
     var grid by rememberRetained { mutableStateOf(EMPTY_GRID) }
     var gridTileMovements by rememberRetained { mutableStateOf(emptyList<GridTileMovement>()) }
     var currentScore by rememberRetained { mutableIntStateOf(0) }
@@ -56,8 +59,6 @@ fun gamePresenter(
     var moveCount by rememberRetained { mutableIntStateOf(0) } // TODO: unused.
     var canUndo by rememberRetained { mutableStateOf(false) }
     val stack by rememberRetained { mutableStateOf(ArrayDeque<UserData>(emptyList())) }
-
-    val userData by produceRetainedState<UserData?>(initialValue = null) { value = gameRepository.fetch() }
 
     suspend fun save() {
         if (!isGameOver) {
