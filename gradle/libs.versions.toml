@@ -7,8 +7,9 @@ jetbrainsCompose = "1.6.11"
 jetbrainsLifecycle = "2.8.2"
 kotlin = "2.0.20"
 kotlinxCoroutines = "1.9.0"
-kotlinxSerialization = "1.7.2"
+kotlinxSerialization = "1.7.3"
 squareupOkio = "3.9.1"
+takahiromRin = "0.3.0"
 xxfastKstore = "0.8.0"
 
 [libraries]
@@ -21,6 +22,7 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "squareupOkio" }
+takahirom-rin = { module = "io.github.takahirom.rin:rin", version.ref = "takahiromRin" }
 xxfast-kstore-common = { module = "io.github.xxfast:kstore", version.ref = "xxfastKstore" }
 xxfast-kstore-file = { module = "io.github.xxfast:kstore-file", version.ref = "xxfastKstore" }
 xxfast-kstore-storage = { module = "io.github.xxfast:kstore-storage", version.ref = "xxfastKstore" }

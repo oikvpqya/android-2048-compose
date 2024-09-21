@@ -32,6 +32,7 @@ kotlin {
                 implementation libs.jetbrains.androidx.lifecycle.viewmodel.compose
                 implementation libs.kotlinx.coroutines.core
                 implementation libs.kotlinx.serialization.json
+                implementation libs.takahirom.rin
                 implementation libs.xxfast.kstore.common
             }
         }
