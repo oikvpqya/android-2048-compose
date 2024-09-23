@@ -1,6 +1,5 @@
 package com.alexjlockwood.twentyfortyeight.ui
 
-import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -271,14 +270,14 @@ private fun makeMove(grid: List<List<Tile?>>, direction: Direction): Pair<List<L
     return Pair(updatedGrid, gridTileMovements)
 }
 
-private fun <T> List<List<T>>.rotate(@IntRange(from = 0, to = 3) numRotations: Int): List<List<T>> {
+private fun <T> List<List<T>>.rotate(numRotations: Int): List<List<T>> {
     return map { row, col, _ ->
         val (rotatedRow, rotatedCol) = getRotatedCellAt(row, col, numRotations)
         this[rotatedRow][rotatedCol]
     }
 }
 
-private fun getRotatedCellAt(row: Int, col: Int, @IntRange(from = 0, to = 3) numRotations: Int): Cell {
+private fun getRotatedCellAt(row: Int, col: Int, numRotations: Int): Cell {
     return when (numRotations) {
         0 -> Cell(row, col)
         1 -> Cell(GRID_SIZE - 1 - col, row)
