@@ -13,11 +13,13 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import io.github.takahirom.rin.RetainedObserver
 import io.github.takahirom.rin.rememberRetained
-import io.github.takahirom.rin.produceRetainedState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -47,9 +49,6 @@ fun gamePresenter(
     eventFlow: Flow<GameUiEvent>,
     gameRepository: GameRepository,
 ): GameUiState {
-    val userData by produceRetainedState<UserData?>(initialValue = null) { value = gameRepository.fetch() }
-    userData ?: return GameUiState(emptyList(), 0, 0, false, false)
-
     var grid by rememberRetained { mutableStateOf(EMPTY_GRID) }
     var gridTileMovements by rememberRetained { mutableStateOf(emptyList<GridTileMovement>()) }
     var currentScore by rememberRetained { mutableIntStateOf(0) }
@@ -57,11 +56,39 @@ fun gamePresenter(
     var isGameOver by rememberRetained { mutableStateOf(false) }
     var moveCount by rememberRetained { mutableIntStateOf(0) } // TODO: unused.
     var canUndo by rememberRetained { mutableStateOf(false) }
-    val stack by rememberRetained { mutableStateOf(ArrayDeque<UserData>(emptyList())) }
+    val stack = rememberRetained { ArrayDeque<UserData>(emptyList()) }
 
-    suspend fun save() {
-        if (!isGameOver) {
-            gameRepository.update(grid, currentScore, bestScore)
+    val coroutineScope = rememberRetained {
+        object : RetainedObserver {
+            val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+            override fun onForgotten() {
+                coroutineScope.cancel()
+            }
+
+            override fun onRemembered() = Unit
+        }
+    }.coroutineScope
+
+    val userData by rememberRetained {
+        object : RetainedObserver {
+            val state = mutableStateOf<UserData?>(null)
+
+            override fun onForgotten() = Unit
+
+            override fun onRemembered() {
+                coroutineScope.launch {
+                    state.value = gameRepository.fetch()
+                }
+            }
+        }
+    }.state
+
+    fun save() {
+        coroutineScope.launch {
+            if (!isGameOver) {
+                gameRepository.update(grid, currentScore, bestScore)
+            }
         }
     }
 
@@ -74,6 +101,7 @@ fun gamePresenter(
         moveCount = 0
         stack.clear()
         canUndo = false
+        save()
     }
 
     fun move(direction: Direction) {
@@ -106,6 +134,7 @@ fun gamePresenter(
         isGameOver = checkIsGameOver(grid)
         moveCount++
         canUndo = true
+        save()
     }
 
     fun undo() {
@@ -119,31 +148,27 @@ fun gamePresenter(
         isGameOver = checkIsGameOver(grid)
         moveCount--
         canUndo = stack.isNotEmpty()
+        save()
     }
 
-    suspend fun eventSink(event: GameUiEvent) {
+    fun eventSink(event: GameUiEvent) {
         when (event) {
             is GameUiEvent.Move -> {
                 move(event.direction)
-                save()
             }
             GameUiEvent.StartNewGame -> {
                 startNewGame()
-                save()
             }
             GameUiEvent.Undo -> {
                 undo()
-                save()
             }
         }
     }
 
     LaunchedEffect(eventFlow) {
-        supervisorScope {
-            eventFlow.collect { event ->
-                launch {
-                    eventSink(event)
-                }
+        eventFlow.collect { event ->
+            launch {
+                eventSink(event)
             }
         }
     }
