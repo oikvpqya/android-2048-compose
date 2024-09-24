@@ -51,7 +51,6 @@ kotlin {
             dependencies {
                 implementation compose.desktop.currentOs
                 implementation libs.harawata.appdirs
-                implementation libs.kotlinx.coroutines.swing
                 implementation libs.squareup.okio
                 implementation libs.xxfast.kstore.file
             }

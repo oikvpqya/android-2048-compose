@@ -18,7 +18,6 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "squareupOkio" }
 takahirom-rin = { module = "io.github.takahirom.rin:rin", version.ref = "takahiromRin" }
