@@ -70,20 +70,6 @@ fun gamePresenter(
         }
     }.coroutineScope
 
-    val userData by rememberRetained {
-        object : RetainedObserver {
-            val state = mutableStateOf<UserData?>(null)
-
-            override fun onForgotten() = Unit
-
-            override fun onRemembered() {
-                coroutineScope.launch {
-                    state.value = gameRepository.fetch()
-                }
-            }
-        }
-    }.state
-
     fun save() {
         coroutineScope.launch {
             if (!isGameOver) {
@@ -173,18 +159,23 @@ fun gamePresenter(
         }
     }
 
-    LaunchedEffect(userData) {
-        if (grid == EMPTY_GRID) {
-            userData?.let { currentUserData ->
-                bestScore = currentUserData.bestScore
-                if (currentUserData.grid == null) {
-                    startNewGame()
-                } else {
-                    // Restore a previously saved game.
-                    grid = currentUserData.grid
-                    gridTileMovements = currentUserData.grid.toGridTileMovements()
-                    currentScore = currentUserData.currentScore
-                    isGameOver = checkIsGameOver(grid)
+    rememberRetained {
+        object : RetainedObserver {
+            override fun onForgotten() = Unit
+
+            override fun onRemembered() {
+                coroutineScope.launch {
+                    val userData = gameRepository.fetch()
+                    bestScore = userData.bestScore
+                    if (userData.grid == null) {
+                        startNewGame()
+                    } else {
+                        // Restore a previously saved game.
+                        grid = userData.grid
+                        gridTileMovements = userData.grid.toGridTileMovements()
+                        currentScore = userData.currentScore
+                        isGameOver = checkIsGameOver(userData.grid)
+                    }
                 }
             }
         }
