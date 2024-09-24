@@ -28,8 +28,6 @@ kotlin {
             dependencies {
                 implementation compose.material
                 implementation compose.ui
-                implementation libs.jetbrains.androidx.lifecycle.runtime.compose
-                implementation libs.jetbrains.androidx.lifecycle.viewmodel.compose
                 implementation libs.kotlinx.coroutines.core
                 implementation libs.kotlinx.serialization.json
                 implementation libs.takahirom.rin
@@ -41,6 +39,9 @@ kotlin {
             dependencies {
                 implementation libs.androidx.core.ktx
                 implementation libs.androidx.activity.compose
+                // Fixed CompositionLocal LocalLifecycleOwner not present errors when using Lifecycle 2.8.X with Compose 1.6.X or earlier.
+                // https://issuetracker.google.com/issues/346808608
+                implementation libs.androidx.lifecycle.runtime.compose
                 implementation libs.squareup.okio
                 implementation libs.xxfast.kstore.file
             }
@@ -50,7 +51,6 @@ kotlin {
             dependencies {
                 implementation compose.desktop.currentOs
                 implementation libs.harawata.appdirs
-                implementation libs.kotlinx.coroutines.swing
                 implementation libs.squareup.okio
                 implementation libs.xxfast.kstore.file
             }

@@ -2,9 +2,9 @@
 androidGradlePlugin = "8.6.1"
 androidxActivity = "1.9.2"
 androidxCore = "1.13.1"
+androidxLifecycle = "2.8.3"
 harawataAppdirs = "1.2.2"
 jetbrainsCompose = "1.6.11"
-jetbrainsLifecycle = "2.8.2"
 kotlin = "2.0.20"
 kotlinxCoroutines = "1.9.0"
 kotlinxSerialization = "1.7.3"
@@ -15,11 +15,9 @@ xxfastKstore = "0.8.0"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
-jetbrains-androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
-jetbrains-androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "squareupOkio" }
 takahirom-rin = { module = "io.github.takahirom.rin:rin", version.ref = "takahiromRin" }
