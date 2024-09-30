@@ -61,6 +61,17 @@ kotlin {
                 implementation libs.xxfast.kstore.storage
             }
         }
+
+        commonTest {
+            dependencies {
+                implementation libs.cash.molecule
+                implementation libs.cash.turbine
+                implementation libs.jetbrains.lifecycle.runtime.compose
+                implementation libs.jetbrains.lifecycle.viewmodel.compose
+                implementation libs.kotlin.test
+                implementation libs.kotlinx.coroutines.test
+            }
+        }
     }
 }
 
