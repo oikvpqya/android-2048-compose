@@ -33,13 +33,18 @@ sealed interface GameUiEvent {
     data object Undo : GameUiEvent
 }
 
-data class GameUiState(
-    val gridTileMovements: List<GridTileMovement>,
-    val currentScore: Int,
-    val bestScore: Int,
-    val isGameOver: Boolean,
-    val canUndo: Boolean,
-)
+sealed interface GameUiState {
+
+    data object Loading : GameUiState
+
+    data class Success(
+        val gridTileMovements: List<GridTileMovement>,
+        val currentScore: Int,
+        val bestScore: Int,
+        val isGameOver: Boolean,
+        val canUndo: Boolean,
+    ) : GameUiState
+}
 
 /**
  * Presenter that contains the logic that powers the 2048 game.
@@ -57,6 +62,7 @@ fun gamePresenter(
     var moveCount by rememberRetained { mutableIntStateOf(0) } // TODO: unused.
     var canUndo by rememberRetained { mutableStateOf(false) }
     val stack = rememberRetained { ArrayDeque<UserData>(emptyList()) }
+    var uiState by rememberRetained { mutableStateOf<GameUiState>(GameUiState.Loading) }
 
     val coroutineScope = rememberRetained {
         object : RetainedObserver {
@@ -137,6 +143,10 @@ fun gamePresenter(
         save()
     }
 
+    fun updateUiState() {
+        uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+    }
+
     fun eventSink(event: GameUiEvent) {
         when (event) {
             is GameUiEvent.Move -> {
@@ -149,6 +159,7 @@ fun gamePresenter(
                 undo()
             }
         }
+        updateUiState()
     }
 
     LaunchedEffect(eventFlow) {
@@ -176,12 +187,13 @@ fun gamePresenter(
                         currentScore = userData.currentScore
                         isGameOver = checkIsGameOver(userData.grid)
                     }
+                    updateUiState()
                 }
             }
         }
     }
 
-    return GameUiState(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+    return uiState
 }
 
 private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {
