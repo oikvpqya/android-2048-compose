@@ -2,7 +2,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
 import com.alexjlockwood.twentyfortyeight.domain.UserData
-import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import io.github.xxfast.kstore.file.storeOf
 import net.harawata.appdirs.AppDirsFactory
@@ -23,7 +23,7 @@ fun main() = application {
         title = "2048 Compose",
     ) {
         App(
-            repository = GameRepository(store),
+            repository = DefaultGameRepository(store),
         )
     }
 }

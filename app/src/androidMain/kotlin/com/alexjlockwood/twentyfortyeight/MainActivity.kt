@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.alexjlockwood.twentyfortyeight.domain.UserData
-import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import io.github.xxfast.kstore.file.storeOf
 import okio.Path.Companion.toPath
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             App(
-                repository = GameRepository(store),
+                repository = DefaultGameRepository(store),
             )
         }
     }
