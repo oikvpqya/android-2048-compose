@@ -15,6 +15,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.Direction
-import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import kotlin.math.PI
 import kotlin.math.atan2
 
@@ -36,18 +36,13 @@ import kotlin.math.atan2
  */
 @Composable
 fun GameUi(
-    gridTileMovements: List<GridTileMovement>,
-    currentScore: Int,
-    bestScore: Int,
-    canUndo: Boolean,
-    isGameOver: Boolean,
-    onNewGameRequested: () -> Unit,
-    onUndoGameRequested: () -> Unit,
-    onSwipeListener: (direction: Direction) -> Unit,
+    uiState: GameUiState,
     modifier: Modifier = Modifier,
+    produceEvent: (GameUiEvent) -> Unit,
 ) {
     var shouldShowNewGameDialog by remember { mutableStateOf(false) }
     var swipeAngle by remember { mutableDoubleStateOf(0.0) }
+    BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -56,10 +51,17 @@ fun GameUi(
                 contentColor = Color.White,
                 backgroundColor = MaterialTheme.colors.primaryVariant,
                 actions = {
-                    IconButton(onClick = { onUndoGameRequested() }, enabled = canUndo) {
+                    IconButton(
+                        onClick = { produceEvent(GameUiEvent.Undo) },
+                        enabled = uiState is GameUiState.Success && uiState.canUndo,
+                    ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
-                    IconButton(onClick = { shouldShowNewGameDialog = true }) {
+                    IconButton(
+                        onClick = { shouldShowNewGameDialog = true },
+                        enabled = uiState is GameUiState.Success,
+
+                    ) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                     }
                 },
@@ -67,6 +69,9 @@ fun GameUi(
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
+        if (uiState !is GameUiState.Success) {
+            return@Scaffold
+        }
         GameLayout(
             modifier = Modifier
                 .padding(innerPadding)
@@ -78,34 +83,31 @@ fun GameUi(
                             swipeAngle = with(dragAmount) { (atan2(-y, x) * 180 / PI + 360) % 360 }
                         },
                         onDragEnd = {
-                            onSwipeListener(
-                                when {
-                                    45 <= swipeAngle && swipeAngle < 135 -> Direction.NORTH
-                                    135 <= swipeAngle && swipeAngle < 225 -> Direction.WEST
-                                    225 <= swipeAngle && swipeAngle < 315 -> Direction.SOUTH
-                                    else -> Direction.EAST
-                                }
-                            )
+                            val direction = when {
+                                45 <= swipeAngle && swipeAngle < 135 -> Direction.NORTH
+                                135 <= swipeAngle && swipeAngle < 225 -> Direction.WEST
+                                225 <= swipeAngle && swipeAngle < 315 -> Direction.SOUTH
+                                else -> Direction.EAST
+                            }
+                            produceEvent(GameUiEvent.Move(direction = direction))
                         }
                     )
                 },
-            gameGrid = { gridSize ->
-                GameGrid(gridTileMovements = gridTileMovements, gridSize = gridSize)
-            },
-            currentScoreText = { TextLabel(text = "$currentScore", fontSize = 36.sp) },
+            gameGrid = { GameGrid(gridTileMovements = uiState.gridTileMovements, gridSize = it) },
+            currentScoreText = { TextLabel(text = "${uiState.currentScore}", fontSize = 36.sp) },
             currentScoreLabel = { TextLabel(text = "Score", fontSize = 18.sp) },
-            bestScoreText = { TextLabel(text = "$bestScore", fontSize = 36.sp) },
+            bestScoreText = { TextLabel(text = "${uiState.bestScore}", fontSize = 36.sp) },
             bestScoreLabel = { TextLabel(text = "Best", fontSize = 18.sp) },
         )
     }
-    if (isGameOver) {
+    if (uiState is GameUiState.Success && uiState.isGameOver) {
         GameDialog(
             title = "Game over",
             message = "Start a new game?",
-            onConfirmListener = { onNewGameRequested() },
+            onConfirmListener = { produceEvent(GameUiEvent.StartNewGame) },
             onDismissListener = {
                 // TODO: allow user to dismiss the dialog so they can take a screenshot
-                onUndoGameRequested()
+                produceEvent(GameUiEvent.Undo)
             },
         )
     } else if (shouldShowNewGameDialog) {
@@ -113,13 +115,21 @@ fun GameUi(
             title = "Start a new game?",
             message = "Starting a new game will erase your current game",
             onConfirmListener = {
-                onNewGameRequested()
+                produceEvent(GameUiEvent.StartNewGame)
                 shouldShowNewGameDialog = false
             },
             onDismissListener = {
                 shouldShowNewGameDialog = false
             },
         )
+    }
+    LaunchedEffect(Unit) {
+        when (uiState) {
+            GameUiState.Loading, is GameUiState.Success -> Unit
+            GameUiState.Nothing -> {
+                produceEvent(GameUiEvent.Load)
+            }
+        }
     }
 }
 

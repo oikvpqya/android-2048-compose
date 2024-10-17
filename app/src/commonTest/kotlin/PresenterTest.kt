@@ -1,4 +1,6 @@
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
@@ -21,33 +23,62 @@ import kotlin.time.Duration.Companion.milliseconds
 class PresenterTest {
 
     @Test
-    fun loadEmptyUserData() = runTest {
-        val presenter = createPresenter(createRepository())
+    fun produceEvent() = runTest {
+        val eventBus = createEventBus()
         val owner = createLifecycleAndViewModelStoreOwner()
         moleculeFlow(RecompositionMode.Immediate) {
             owner.returningCompositionLocalProvider {
-                presenter.presenter()
+                createPresenter(eventBus)
             }
         }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            eventBus.produceEvent(GameUiEvent.Load)
             assertTrue { awaitItem() is GameUiState.Loading }
             assertTrue { awaitItem() is GameUiState.Success }
         }
     }
 
     @Test
-    fun loadSavedUserData() = runTest {
+    fun launchedEffect() = runTest {
+        val owner = createLifecycleAndViewModelStoreOwner()
+        moleculeFlow(RecompositionMode.Immediate) {
+            owner.returningCompositionLocalProvider {
+                val eventBus = remember { createEventBus() }
+                val uiState = createPresenter(eventBus)
+                LaunchedEffect(Unit) {
+                    when (uiState) {
+                        GameUiState.Nothing -> {
+                            eventBus.produceEvent(GameUiEvent.Load)
+                        }
+                        GameUiState.Loading, is GameUiState.Success -> Unit
+                    }
+                }
+                uiState
+            }
+        }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            assertTrue { awaitItem() is GameUiState.Loading }
+            assertTrue { awaitItem() is GameUiState.Success }
+        }
+    }
+
+    @Test
+    fun load() = runTest {
+        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createRepository(userData))
+        val repository = createRepository(userData)
         val owner = createLifecycleAndViewModelStoreOwner()
         moleculeFlow(RecompositionMode.Immediate) {
             owner.returningCompositionLocalProvider {
-                presenter.presenter()
+                createPresenter(eventBus, repository)
             }
         }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            eventBus.produceEvent(GameUiEvent.Load)
             assertTrue { awaitItem() is GameUiState.Loading }
 
             val item = awaitItem()
@@ -60,20 +91,25 @@ class PresenterTest {
 
     @Test
     fun startNewGame() = runTest {
+        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createRepository(userData))
+        val repository = createRepository(userData)
         val owner = createLifecycleAndViewModelStoreOwner()
         moleculeFlow(RecompositionMode.Immediate)  {
-            owner.returningCompositionLocalProvider { presenter.presenter() }
+            owner.returningCompositionLocalProvider {
+                createPresenter(eventBus, repository)
+            }
         }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            eventBus.produceEvent(GameUiEvent.Load)
             assertTrue { awaitItem() is GameUiState.Loading }
             assertTrue { awaitItem() is GameUiState.Success }
 
-            presenter.eventSink(GameUiEvent.StartNewGame)
+            eventBus.produceEvent(GameUiEvent.StartNewGame)
             val item = awaitItem()
             assertTrue { item is GameUiState.Success }
             item as GameUiState.Success
@@ -83,20 +119,25 @@ class PresenterTest {
 
     @Test
     fun move() = runTest {
+        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createRepository(userData))
+        val repository = createRepository(userData)
         val owner = createLifecycleAndViewModelStoreOwner()
         moleculeFlow(RecompositionMode.Immediate)  {
-            owner.returningCompositionLocalProvider { presenter.presenter() }
+            owner.returningCompositionLocalProvider {
+                createPresenter(eventBus, repository)
+            }
         }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            eventBus.produceEvent(GameUiEvent.Load)
             assertTrue { awaitItem() is GameUiState.Loading }
             assertTrue { awaitItem() is GameUiState.Success }
 
-            presenter.eventSink(GameUiEvent.Move(Direction.WEST))
+            eventBus.produceEvent(GameUiEvent.Move(Direction.WEST))
             val item = awaitItem()
             assertTrue { item is GameUiState.Success }
             item as GameUiState.Success
@@ -113,22 +154,27 @@ class PresenterTest {
 
     @Test
     fun undo() = runTest {
+        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createRepository(userData))
+        val repository = createRepository(userData)
         val owner = createLifecycleAndViewModelStoreOwner()
         moleculeFlow(RecompositionMode.Immediate)  {
-            owner.returningCompositionLocalProvider { presenter.presenter() }
+            owner.returningCompositionLocalProvider {
+                createPresenter(eventBus, repository)
+            }
         }.test {
+            assertTrue { awaitItem() is GameUiState.Nothing }
+            eventBus.produceEvent(GameUiEvent.Load)
             assertTrue { awaitItem() is GameUiState.Loading }
             assertTrue { awaitItem() is GameUiState.Success }
-            presenter.eventSink(GameUiEvent.Move(Direction.WEST))
+            eventBus.produceEvent(GameUiEvent.Move(Direction.WEST))
             assertTrue { awaitItem() is GameUiState.Success }
 
-            presenter.eventSink(GameUiEvent.Undo)
+            eventBus.produceEvent(GameUiEvent.Undo)
             val item = awaitItem()
             assertTrue { item is GameUiState.Success }
             item as GameUiState.Success
@@ -144,6 +190,14 @@ class PresenterTest {
     }
 }
 
+private class EventBus<EVENT> {
+
+    val eventFlow = MutableSharedFlow<EVENT>(extraBufferCapacity = 20)
+    fun produceEvent(event: EVENT) = eventFlow.tryEmit(event)
+}
+
+private fun createEventBus(): EventBus<GameUiEvent> = EventBus()
+
 private fun createRepository(
     userData: UserData = UserData.EMPTY_USER_DATA,
 ): GameRepository = object : GameRepository {
@@ -157,23 +211,8 @@ private fun createRepository(
     }
 }
 
-private interface Presenter<STATE, EVENT> {
-
-    @Composable
-    fun presenter(): STATE
-
-    fun eventSink(event: EVENT)
-}
-
+@Composable
 private fun createPresenter(
-    repository: GameRepository = createRepository(),
-): Presenter<GameUiState, GameUiEvent> = object : Presenter<GameUiState, GameUiEvent> {
-    private val eventFlow = MutableSharedFlow<GameUiEvent>(extraBufferCapacity = 20)
-
-    @Composable
-    override fun presenter(): GameUiState = gamePresenter(eventFlow, repository)
-
-    override fun eventSink(event: GameUiEvent) {
-        eventFlow.tryEmit(event)
-    }
-}
+    eventBus: EventBus<GameUiEvent>,
+    repository: GameRepository = remember { createRepository() },
+): GameUiState = gamePresenter(eventBus.eventFlow, repository)
