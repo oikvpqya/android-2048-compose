@@ -14,6 +14,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +41,7 @@ fun GameUi(
     modifier: Modifier = Modifier,
     produceEvent: (GameUiEvent) -> Unit,
 ) {
+    var shouldShowAboutDialog by remember { mutableStateOf(false) }
     var shouldShowNewGameDialog by remember { mutableStateOf(false) }
     var swipeAngle by remember { mutableDoubleStateOf(0.0) }
     BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
@@ -60,9 +62,13 @@ fun GameUi(
                     IconButton(
                         onClick = { shouldShowNewGameDialog = true },
                         enabled = uiState is GameUiState.Success,
-
                     ) {
                         Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+                    }
+                    IconButton(
+                        onClick = { shouldShowAboutDialog = true },
+                    ) {
+                        Icon(imageVector = Icons.Filled.Info, contentDescription = null)
                     }
                 },
             )
@@ -120,6 +126,12 @@ fun GameUi(
             },
             onDismissListener = {
                 shouldShowNewGameDialog = false
+            },
+        )
+    } else if (shouldShowAboutDialog) {
+        AboutDialog(
+            onDismissListener = {
+                shouldShowAboutDialog = false
             },
         )
     }

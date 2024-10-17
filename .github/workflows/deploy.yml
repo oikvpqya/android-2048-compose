@@ -28,7 +28,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build WasmJs with Gradle
-        run: ./gradlew :app:wasmJsBrowserDistribution --no-configuration-cache
+        run: |
+          ./gradlew :app:licensee
+          ./gradlew :app:copyArtifactsJsonFiles
+          ./gradlew :app:wasmJsBrowserDistribution --no-configuration-cache
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

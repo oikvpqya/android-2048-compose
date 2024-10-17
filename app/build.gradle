@@ -1,7 +1,9 @@
+import java.nio.file.*
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     alias libs.plugins.android.application
+    alias libs.plugins.cash.licensee
     alias libs.plugins.compose.compiler
     alias libs.plugins.jetbrains.compose
     alias libs.plugins.kotlin.multiplatform
@@ -26,6 +28,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation compose.components.resources
                 implementation compose.material
                 implementation compose.ui
                 implementation libs.kotlinx.coroutines.core
@@ -39,9 +42,6 @@ kotlin {
             dependencies {
                 implementation libs.androidx.core.ktx
                 implementation libs.androidx.activity.compose
-                // Fixed CompositionLocal LocalLifecycleOwner not present errors when using Lifecycle 2.8.X with Compose 1.6.X or earlier.
-                // https://issuetracker.google.com/issues/346808608
-                implementation libs.androidx.lifecycle.runtime.compose
                 implementation libs.squareup.okio
                 implementation libs.xxfast.kstore.file
             }
@@ -118,5 +118,46 @@ compose {
 
     experimental {
         web.application {}
+    }
+
+    resources {
+        packageOfResClass = "com.alexjlockwood.twentyfortyeight"
+        customDirectory(
+            "androidMain",
+            layout.buildDirectory.dir("generated/licensee/androidRelease")
+        )
+        customDirectory(
+            "desktopMain",
+            layout.buildDirectory.dir("generated/licensee/desktop")
+        )
+        customDirectory(
+            "wasmJsMain",
+            layout.buildDirectory.dir("generated/licensee/wasmJs")
+        )
+    }
+}
+
+licensee {
+    allow "Apache-2.0"
+    allowUrl("https://opensource.org/licenses/Apache-2.0.html") {
+        // for takahirom Rin
+        because "Apache-2.0, but self-hosted copy of the license"
+    }
+}
+
+tasks.register("copyArtifactsJsonFiles") {
+    String[] dirs = ["androidRelease", "desktop", "wasmJs"]
+    String buildDirectory = layout.buildDirectory.get().toString()
+    for(dir in dirs) {
+        Path from = Paths.get(buildDirectory, "reports/licensee/$dir/artifacts.json")
+        Path to = Paths.get(buildDirectory, "generated/licensee/$dir/files/artifacts.json")
+        try {
+            if (!Files.exists(to.parent)) {
+                Files.createDirectories(to.parent)
+            }
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
+        } catch(IOException e){
+            System.out.println(e)
+        }
     }
 }
