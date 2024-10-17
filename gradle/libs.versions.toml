@@ -2,12 +2,11 @@
 androidGradlePlugin = "8.6.1"
 androidxActivity = "1.9.2"
 androidxCore = "1.13.1"
-androidxLifecycle = "2.8.3"
 cashMolecule = "2.0.0"
 cashTurbine = "1.1.0"
 harawataAppdirs = "1.2.2"
-jetbrainsCompose = "1.6.11"
-jetbrainsLifecycle = "2.8.0"
+jetbrainsCompose = "1.7.0"
+jetbrainsLifecycle = "2.8.3"
 kotlin = "2.0.20"
 kotlinxCoroutines = "1.9.0"
 kotlinxSerialization = "1.7.3"
@@ -18,7 +17,6 @@ xxfastKstore = "0.8.0"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
-androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 cash-molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "cashMolecule" }
 cash-turbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
