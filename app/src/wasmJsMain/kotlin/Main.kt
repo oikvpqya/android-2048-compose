@@ -8,10 +8,15 @@ import io.github.xxfast.kstore.storage.storeOf
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    val store = storeOf(key = USER_DATA_FILE_NAME, default = UserData.EMPTY_USER_DATA)
-    CanvasBasedWindow(canvasElementId = "ComposeTarget") {
-        App(
-            repository = DefaultGameRepository(store),
+    val repository by lazy {
+        DefaultGameRepository(
+            store = storeOf(
+                key = USER_DATA_FILE_NAME,
+                default = UserData.EMPTY_USER_DATA,
+            ),
         )
+    }
+    CanvasBasedWindow(canvasElementId = "ComposeTarget") {
+        App(repository = repository)
     }
 }
