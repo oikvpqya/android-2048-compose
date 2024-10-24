@@ -5,9 +5,10 @@ import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import io.github.xxfast.kstore.file.storeOf
+import kotlinx.io.files.Path
 import net.harawata.appdirs.AppDirsFactory
-import okio.FileSystem
-import okio.Path.Companion.toPath
+import java.nio.file.Files
+import java.nio.file.Paths
 
 private const val PACKAGE_NAME = "com.alexjlockwood.twentyfortyeightcompose"
 private const val VERSION = "1.0.0"
@@ -15,15 +16,13 @@ private const val AUTHOR = "alexjlockwood"
 
 fun main() {
     val repository by lazy {
-        val userDataDir = AppDirsFactory.getInstance().getUserDataDir(PACKAGE_NAME, VERSION, AUTHOR).toPath()
-        with(FileSystem.SYSTEM) {
-            if (!exists(userDataDir)) {
-                createDirectories(userDataDir)
-            }
+        val userDataDir = Paths.get(AppDirsFactory.getInstance().getUserDataDir(PACKAGE_NAME, VERSION, AUTHOR))
+        if (!Files.exists(userDataDir)) {
+            Files.createDirectories(userDataDir)
         }
         DefaultGameRepository(
             store = storeOf(
-                file = userDataDir.resolve(USER_DATA_FILE_NAME),
+                file = Path(userDataDir.resolve(USER_DATA_FILE_NAME).toString()),
                 default = UserData.EMPTY_USER_DATA,
             ),
         )
