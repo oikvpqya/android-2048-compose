@@ -121,43 +121,37 @@ compose {
     }
 
     resources {
-        packageOfResClass = "com.alexjlockwood.twentyfortyeight"
-        customDirectory(
-            "androidMain",
-            layout.buildDirectory.dir("generated/licensee/androidRelease")
-        )
-        customDirectory(
-            "desktopMain",
-            layout.buildDirectory.dir("generated/licensee/desktop")
-        )
-        customDirectory(
-            "wasmJsMain",
-            layout.buildDirectory.dir("generated/licensee/wasmJs")
-        )
+        packageOfResClass "com.alexjlockwood.twentyfortyeight"
+        String[] targets = ["android", "desktop", "wasmJs"]
+        for (target in targets) {
+            customDirectory("${target}Main", layout.buildDirectory.dir(Paths.get("generated", "licensee", target).toString()))
+        }
     }
 }
 
 licensee {
     allow "Apache-2.0"
+    // for takahirom Rin
     allowUrl("https://opensource.org/licenses/Apache-2.0.html") {
-        // for takahirom Rin
-        because "Apache-2.0, but self-hosted copy of the license"
+        because "Apache-2.0"
     }
 }
 
 tasks.register("copyArtifactsJsonFiles") {
-    String[] dirs = ["androidRelease", "desktop", "wasmJs"]
-    String buildDirectory = layout.buildDirectory.get().toString()
-    for(dir in dirs) {
-        Path from = Paths.get(buildDirectory, "reports/licensee/$dir/artifacts.json")
-        Path to = Paths.get(buildDirectory, "generated/licensee/$dir/files/artifacts.json")
-        try {
-            if (!Files.exists(to.parent)) {
-                Files.createDirectories(to.parent)
-            }
-            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
-        } catch(IOException e){
-            System.out.println(e)
+    String[] targets = ["android", "desktop", "wasmJs"]
+    String buildDir = layout.buildDirectory.get().toString()
+    for (target in targets) {
+        String dir
+        if (target == "android") {
+            dir = "androidRelease"
+        } else {
+            dir = target
         }
+        Path from = Paths.get(buildDir, "reports", "licensee", dir, "artifacts.json")
+        Path to = Paths.get(buildDir, "generated", "licensee", target, "files", "artifacts.json")
+        if (!Files.exists(to.parent)) {
+            Files.createDirectories(to.parent)
+        }
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
 }
