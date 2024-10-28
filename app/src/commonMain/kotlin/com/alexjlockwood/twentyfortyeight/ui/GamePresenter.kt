@@ -3,10 +3,11 @@ package com.alexjlockwood.twentyfortyeight.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTile
@@ -14,13 +15,9 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import io.github.takahirom.rin.RetainedObserver
-import io.github.takahirom.rin.rememberRetained
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -52,28 +49,30 @@ sealed interface GameUiState {
 /**
  * Presenter that contains the logic that powers the 2048 game.
  */
-@Composable
-fun gamePresenter(
-    eventFlow: Flow<GameUiEvent>,
-    gameRepository: GameRepository,
-): GameUiState {
-    var grid by rememberRetained { mutableStateOf(EMPTY_GRID) }
-    var gridTileMovements by rememberRetained { mutableStateOf(emptyList<GridTileMovement>()) }
-    var currentScore by rememberRetained { mutableIntStateOf(0) }
-    var bestScore by rememberRetained { mutableIntStateOf(0) }
-    var isGameOver by rememberRetained { mutableStateOf(false) }
-    var moveCount by rememberRetained { mutableIntStateOf(0) } // TODO: unused.
-    var canUndo by rememberRetained { mutableStateOf(false) }
-    val stack = rememberRetained { ArrayDeque<UserData>(emptyList()) }
-    var uiState by remember { mutableStateOf<GameUiState>(GameUiState.Nothing) }
+class GamePresenter(
+    private val gameRepository: GameRepository,
+) : ViewModel() {
 
-    suspend fun save() {
+    private var grid = EMPTY_GRID
+    private var gridTileMovements = emptyList<GridTileMovement>()
+    private var currentScore = 0
+    private var bestScore = 0
+    private var isGameOver = false
+    private var moveCount = 0
+    private var canUndo = false
+    private val stack = ArrayDeque<UserData>(emptyList())
+
+    private suspend fun save() {
         if (!isGameOver) {
-            gameRepository.update(grid, currentScore, bestScore)
+            withContext(viewModelScope.coroutineContext) {
+                launch { gameRepository.update(grid, currentScore, bestScore) }
+            }
         }
     }
 
-    suspend fun startNewGame() {
+    private suspend fun startNewGame(
+        updateUiStete: (GameUiState) -> Unit,
+    ) {
         gridTileMovements = (0 until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
         val addedGridTiles = gridTileMovements.map { it.toGridTile }
         grid = EMPTY_GRID.map { row, col, _ -> addedGridTiles.find { row == it.cell.row && col == it.cell.col }?.tile }
@@ -83,10 +82,13 @@ fun gamePresenter(
         stack.clear()
         canUndo = false
         save()
-        uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+        updateUiStete(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo))
     }
 
-    suspend fun move(direction: Direction) {
+    private suspend fun move(
+        direction: Direction,
+        updateUiStete: (GameUiState) -> Unit,
+    ) {
         var (updatedGrid, updatedGridTileMovements) = makeMove(grid, direction)
 
         if (!hasGridChanged(updatedGridTileMovements)) {
@@ -117,10 +119,12 @@ fun gamePresenter(
         moveCount++
         canUndo = true
         save()
-        uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+        updateUiStete(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo))
     }
 
-    suspend fun undo() {
+    private suspend fun undo(
+        updateUiStete: (GameUiState) -> Unit,
+    ) {
         require(canUndo)
         // Pop and restore game from stack.
         val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeLast()
@@ -132,19 +136,23 @@ fun gamePresenter(
         moveCount--
         canUndo = stack.isNotEmpty()
         save()
-        uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+        updateUiStete(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo))
     }
 
-    suspend fun load() {
+    private suspend fun load(
+        updateUiStete: (GameUiState) -> Unit,
+    ) {
         if (grid != EMPTY_GRID) {
-            uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+            updateUiStete(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo))
             return
         }
-        uiState = GameUiState.Loading
-        val userData = gameRepository.fetch()
+        updateUiStete(GameUiState.Loading)
+        val userData = withContext(viewModelScope.coroutineContext) {
+            gameRepository.fetch()
+        }
         bestScore = userData.bestScore
         if (userData.grid == null) {
-            startNewGame()
+            startNewGame(updateUiStete)
         } else {
             // Restore a previously saved game.
             grid = userData.grid
@@ -152,27 +160,34 @@ fun gamePresenter(
             currentScore = userData.currentScore
             isGameOver = checkIsGameOver(userData.grid)
         }
-        uiState = GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo)
+        updateUiStete(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver, canUndo))
     }
 
-    EventEffect(eventFlow) { event ->
-        when (event) {
-            GameUiEvent.Load -> {
-                load()
-            }
-            is GameUiEvent.Move -> {
-                move(event.direction)
-            }
-            GameUiEvent.StartNewGame -> {
-                startNewGame()
-            }
-            GameUiEvent.Undo -> {
-                undo()
+    @Composable
+    fun uiState(
+        eventFlow: Flow<GameUiEvent>,
+    ): GameUiState {
+        var uiState by remember { mutableStateOf<GameUiState>(GameUiState.Nothing) }
+        LaunchedEffect(eventFlow) {
+            eventFlow.collect { event ->
+                when (event) {
+                    GameUiEvent.Load -> {
+                        load { uiState = it }
+                    }
+                    is GameUiEvent.Move -> {
+                        move(event.direction) { uiState = it }
+                    }
+                    GameUiEvent.StartNewGame -> {
+                        startNewGame { uiState = it }
+                    }
+                    GameUiEvent.Undo -> {
+                        undo { uiState = it }
+                    }
+                }
             }
         }
+        return uiState
     }
-
-    return uiState
 }
 
 private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {
@@ -322,28 +337,4 @@ private fun List<List<Tile?>>.toGridTileMovements(): List<GridTileMovement> {
             GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
         }
     }.filterNotNull()
-}
-
-@Composable
-private fun <EVENT> EventEffect(
-    eventFlow: Flow<EVENT>,
-    block: suspend CoroutineScope.(EVENT) -> Unit,
-) {
-    val coroutineScope = rememberRetained {
-        object : RetainedObserver {
-            val coroutineScope = CoroutineScope(Dispatchers.Default)
-            override fun onForgotten() {
-                coroutineScope.cancel()
-            }
-            override fun onRemembered() = Unit
-        }
-    }.coroutineScope
-
-    LaunchedEffect(eventFlow) {
-        eventFlow.collect { event ->
-            coroutineScope.launch {
-                block(event)
-            }
-        }
-    }
 }

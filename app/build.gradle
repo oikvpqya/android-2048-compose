@@ -31,9 +31,9 @@ kotlin {
                 implementation compose.components.resources
                 implementation compose.material
                 implementation compose.ui
+                implementation libs.jetbrains.lifecycle.viewmodel.compose
                 implementation libs.kotlinx.coroutines.core
                 implementation libs.kotlinx.serialization.json
-                implementation libs.takahirom.rin
                 implementation libs.xxfast.kstore.common
             }
         }
@@ -51,6 +51,7 @@ kotlin {
             dependencies {
                 implementation compose.desktop.currentOs
                 implementation libs.harawata.appdirs
+                implementation libs.kotlinx.coroutines.swing
                 implementation libs.kotlinx.io.core
                 implementation libs.xxfast.kstore.file
             }
@@ -66,8 +67,6 @@ kotlin {
             dependencies {
                 implementation libs.cash.molecule
                 implementation libs.cash.turbine
-                implementation libs.jetbrains.lifecycle.runtime.compose
-                implementation libs.jetbrains.lifecycle.viewmodel.compose
                 implementation libs.kotlin.test
                 implementation libs.kotlinx.coroutines.test
             }
@@ -131,10 +130,6 @@ compose {
 
 licensee {
     allow "Apache-2.0"
-    // for takahirom Rin
-    allowUrl("https://opensource.org/licenses/Apache-2.0.html") {
-        because "Apache-2.0"
-    }
 }
 
 tasks.register("copyArtifactsJsonFiles") {
