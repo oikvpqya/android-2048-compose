@@ -21,14 +21,13 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 cash-molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "cashMolecule" }
 cash-turbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine" }
 harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
-jetbrains-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
 jetbrains-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-takahirom-rin = { module = "io.github.takahirom.rin:rin", version.ref = "takahiromRin" }
 xxfast-kstore-common = { module = "io.github.xxfast:kstore", version.ref = "xxfastKstore" }
 xxfast-kstore-file = { module = "io.github.xxfast:kstore-file", version.ref = "xxfastKstore" }
 xxfast-kstore-storage = { module = "io.github.xxfast:kstore-storage", version.ref = "xxfastKstore" }
