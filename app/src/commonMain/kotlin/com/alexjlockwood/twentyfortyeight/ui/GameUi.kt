@@ -4,7 +4,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.Icon
@@ -22,7 +23,9 @@ import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +38,7 @@ import kotlin.math.atan2
 /**
  * Renders the 2048 game's home screen UI.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GameUi(
     uiState: GameUiState,
@@ -46,7 +50,7 @@ fun GameUi(
     var swipeAngle by remember { mutableDoubleStateOf(0.0) }
     BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.windowInsetsPadding(WindowInsets.safeContent),
         topBar = {
             TopAppBar(
                 title = { Text(text = "2048 Compose") },
@@ -73,7 +77,6 @@ fun GameUi(
                 },
             )
         },
-        contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
         if (uiState !is GameUiState.Success) {
             return@Scaffold

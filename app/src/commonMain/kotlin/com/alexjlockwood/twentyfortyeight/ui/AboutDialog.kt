@@ -97,7 +97,7 @@ private fun About(
             style = MaterialTheme.typography.h6,
         )
         Text(
-            text = "Copyright (c) 2024 oikvpqya Yuya",
+            text = "Copyright (c) 2025 oikvpqya Yuya",
             style = MaterialTheme.typography.body2,
         )
         Text(
