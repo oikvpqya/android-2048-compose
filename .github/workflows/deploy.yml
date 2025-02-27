@@ -21,8 +21,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
+          distribution: 'jetbrains'
           java-version: '17'
-          distribution: 'temurin'
+          package-type: 'jdk+jcef'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -31,7 +32,7 @@ jobs:
         run: |
           ./gradlew :app:licensee
           ./gradlew :app:copyArtifactsJsonFiles
-          ./gradlew :app:wasmJsBrowserDistribution --no-configuration-cache
+          ./gradlew :app:wasmJsBrowserDistribution
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
