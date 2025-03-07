@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.savedstate.SavedState
 import androidx.savedstate.serialization.decodeFromSavedState
 import androidx.savedstate.serialization.encodeToSavedState
 import com.alexjlockwood.twentyfortyeight.domain.Cell
@@ -23,11 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.serializer
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -66,8 +61,7 @@ private data class GamePresenterState(
     var isGameOver: Boolean,
     var moveCount: Int, // TODO: unused.
     var canUndo: Boolean,
-    @Serializable(UserDataArrayDequeSerializer::class)
-    val stack: ArrayDeque<UserData>,
+    val stack: MutableList<UserData>,
 )
 
 /**
@@ -76,24 +70,7 @@ private data class GamePresenterState(
 class GamePresenter(
     private val gameRepository: GameRepository,
     private val presenterDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
-    savedState: SavedState? = null,
 ) {
-
-    private val state = savedState?.let { decodeFromSavedState<GamePresenterState>(it) }
-        ?: GamePresenterState(
-            grid = EMPTY_GRID,
-            gridTileMovements = emptyList(),
-            currentScore = 0,
-            bestScore = 0,
-            isGameOver = false,
-            moveCount = 0,
-            canUndo = false,
-            stack = ArrayDeque(),
-        )
-
-    fun savedState(): SavedState {
-        return encodeToSavedState(state)
-    }
 
     private suspend fun GamePresenterState.save() {
         if (!isGameOver) {
@@ -132,7 +109,7 @@ class GamePresenter(
         // Push game data to stack.
         stack.add(UserData(grid, currentScore, bestScore))
         while (stack.size > MAX_STACK) {
-            stack.removeFirst()
+            stack.removeAt(0)
         }
 
         // Increment the score.
@@ -163,7 +140,7 @@ class GamePresenter(
     ) {
         require(stack.isNotEmpty() && canUndo)
         // Pop and restore game from stack.
-        val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeLast()
+        val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeAt(stack.lastIndex)
         grid = updatedGrid ?: EMPTY_GRID
         gridTileMovements = grid.toGridTileMovements()
         currentScore = updatedCurrentScore
@@ -203,21 +180,38 @@ class GamePresenter(
     fun uiState(
         eventFlow: Flow<GameUiEvent>,
     ): GameUiState {
+        val presenterState = rememberSaveable(
+            saver = Saver(
+                save = { encodeToSavedState(it) },
+                restore = { decodeFromSavedState(it) },
+            ),
+        ) {
+            GamePresenterState(
+                grid = EMPTY_GRID,
+                gridTileMovements = emptyList(),
+                currentScore = 0,
+                bestScore = 0,
+                isGameOver = false,
+                moveCount = 0,
+                canUndo = false,
+                stack = mutableListOf(),
+            )
+        }
         var uiState by remember { mutableStateOf<GameUiState>(GameUiState.Nothing) }
         LaunchedEffect(eventFlow) {
             eventFlow.collect { event ->
                 when (event) {
                     GameUiEvent.Load -> {
-                        state.load { uiState = it }
+                        presenterState.load { uiState = it }
                     }
                     is GameUiEvent.Move -> {
-                        state.move(event.direction) { uiState = it }
+                        presenterState.move(event.direction) { uiState = it }
                     }
                     GameUiEvent.StartNewGame -> {
-                        state.startNewGame { uiState = it }
+                        presenterState.startNewGame { uiState = it }
                     }
                     GameUiEvent.Undo -> {
-                        state.undo { uiState = it }
+                        presenterState.undo { uiState = it }
                     }
                 }
             }
@@ -373,31 +367,4 @@ private fun List<List<Tile?>>.toGridTileMovements(): List<GridTileMovement> {
             GridTileMovement.noop(GridTile(Cell(row, col), tile ?: return@mapIndexed null))
         }
     }.filterNotNull()
-}
-
-private object UserDataArrayDequeSerializer : KSerializer<ArrayDeque<UserData>> {
-
-    private val userDataListSerializer = serializer<List<UserData>>()
-    override val descriptor = userDataListSerializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ArrayDeque<UserData> {
-        return ArrayDeque(decoder.decodeSerializableValue(userDataListSerializer))
-    }
-
-    override fun serialize(encoder: Encoder, value: ArrayDeque<UserData>) {
-        encoder.encodeSerializableValue(userDataListSerializer, value.takeLast(MAX_STACK))
-    }
-}
-
-@Composable
-fun rememberGamePresenter(
-    gameRepository: GameRepository,
-): GamePresenter {
-    return rememberSaveable(
-        gameRepository,
-        saver = Saver(
-            save = { it.savedState() },
-            restore = { GamePresenter(gameRepository = gameRepository, savedState = it) },
-        ),
-    ) { GamePresenter(gameRepository = gameRepository) }
 }
