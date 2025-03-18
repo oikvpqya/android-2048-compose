@@ -4,7 +4,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -50,7 +50,7 @@ fun GameUi(
     var swipeAngle by remember { mutableDoubleStateOf(0.0) }
     BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
     Scaffold(
-        modifier = modifier.windowInsetsPadding(WindowInsets.safeContent),
+        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         topBar = {
             TopAppBar(
                 title = { Text(text = "2048 Compose") },
