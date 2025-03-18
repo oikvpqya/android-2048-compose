@@ -1,11 +1,15 @@
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
-import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
+import com.alexjlockwood.twentyfortyeight.repository.PolymorphismJson
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
-import io.github.xxfast.kstore.file.storeOf
+import io.github.xxfast.kstore.file.FileCodec
+import io.github.xxfast.kstore.storeOf
 import kotlinx.io.files.Path
+import kotlinx.serialization.PolymorphicSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import net.harawata.appdirs.AppDirsFactory
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -20,10 +24,17 @@ fun main() {
         if (!Files.exists(userDataDir)) {
             Files.createDirectories(userDataDir)
         }
+        val file = userDataDir.resolve(USER_DATA_FILE_NAME).toString()
         DefaultGameRepository(
             store = storeOf(
-                file = Path(userDataDir.resolve(USER_DATA_FILE_NAME).toString()),
-                default = UserData.EMPTY_USER_DATA,
+                codec = FileCodec(
+                    file = Path(file),
+                    tempFile = Path("$file.temp"),
+                    json = PolymorphismJson,
+                    serializer = MapSerializer(String.serializer(), PolymorphicSerializer(Any::class)),
+                ),
+                default = null,
+                enableCache = false,
             ),
         )
     }
