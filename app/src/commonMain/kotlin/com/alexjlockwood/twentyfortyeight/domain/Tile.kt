@@ -30,7 +30,6 @@ object TileSerializer : KSerializer<Tile> {
 
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Tile") {
         element<Int>("num")
-        element<Int>("id")
     }
 
     override fun serialize(encoder: Encoder, value: Tile) {
