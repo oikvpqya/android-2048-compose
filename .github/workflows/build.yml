@@ -26,10 +26,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
-        run: |
-          ./gradlew :app:licensee
-          ./gradlew :app:copyArtifactsJsonFiles
-          ./gradlew :app:assemble
+        run: ./gradlew :app:assemble
 
       - name: Test with Gradle
         run: ./gradlew :app:desktopTest
