@@ -1,8 +1,9 @@
 import app.cash.licensee.LicenseeTask
-import java.nio.file.Paths
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.nio.file.Paths
 
 plugins {
     alias libs.plugins.android.application
@@ -13,13 +14,18 @@ plugins {
     alias libs.plugins.kotlin.serialization
 }
 
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+}
+
 kotlin {
-    jvmToolchain(17)
     androidTarget()
     jvm("desktop")
 
     wasmJs {
-        moduleName = "composeApp"
+        outputModuleName = "composeApp"
         browser {
             commonWebpackConfig {
                 outputFileName = "composeApp.js"
@@ -83,7 +89,7 @@ android {
 
     defaultConfig {
         applicationId "com.alexjlockwood.twentyfortyeightcompose"
-        minSdk 21
+        minSdk 26 // Minimal API available for kotlinx.io (java.nio.file.Files).
         targetSdk 35
         versionCode 1
         versionName "1.0.0"
@@ -105,12 +111,17 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            signingConfig signingConfigs.getByName("debug")
+            signingConfig signingConfigs.named("debug").get()
         }
     }
 
     buildFeatures {
         compose true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
@@ -141,20 +152,22 @@ compose {
             if (target.platformType == KotlinPlatformType.androidJvm) {
                 androidComponents {
                     onVariants(selector().all()) { variant ->
-                        String suffix = "${target.name}${replaceFirstCharToUpper(variant.name)}"
-                        customDirectory(suffix, licenseeResourcesDirectoryPropertyProvider(suffix, variant.runtimeConfiguration))
+                        String suffix = "${target.name}${replaceFirstCharWithUpperCase(variant.name)}"
+                        customDirectory(suffix, licenseeResourcesDirectory(suffix, provider { variant.runtimeConfiguration }))
                     }
                 }
             } else {
-                String suffix = "${target.name}${replaceFirstCharToUpper(KotlinCompilation.MAIN_COMPILATION_NAME)}"
-                KotlinCompilation compilation = target.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-                String configurationName
-                if (compilation.runtimeDependencyConfigurationName != null) {
-                    configurationName = compilation.runtimeDependencyConfigurationName
-                } else {
-                    configurationName = compilation.compileDependencyConfigurationName
+                String compilationName = KotlinCompilation.MAIN_COMPILATION_NAME
+                String suffix = "${target.name}${replaceFirstCharWithUpperCase(compilationName)}"
+                Provider<Configuration> configuration = target.compilations.named(compilationName).map { compilation ->
+                    String configurationName = compilation.runtimeDependencyConfigurationName
+                    if (configurationName != null) {
+                        configurations.named(configurationName).get()
+                    } else {
+                        configurations.named(compilation.compileDependencyConfigurationName).get()
+                    }
                 }
-                customDirectory(suffix, licenseeResourcesDirectoryPropertyProvider(suffix, configurations.getByName(configurationName)))
+                customDirectory(suffix, licenseeResourcesDirectory(suffix, configuration))
             }
         }
     }
@@ -164,13 +177,13 @@ licensee {
     allow "Apache-2.0"
 }
 
-private static String replaceFirstCharToUpper(String input) {
+private static String replaceFirstCharWithUpperCase(String input) {
     return input.substring(0,1).toUpperCase() + input.substring(1)
 }
 
-private Provider<DirectoryProperty> licenseeResourcesDirectoryPropertyProvider(String suffix, Configuration configuration) {
-    return tasks.register("licenseeGenerateResources${replaceFirstCharToUpper(suffix)}", LicenseeTask) {
-        configurationToCheck configuration
+private Provider<DirectoryProperty> licenseeResourcesDirectory(String suffix, Provider<Configuration> configuration) {
+    return tasks.register("licenseeGenerateResources${replaceFirstCharWithUpperCase(suffix)}", LicenseeTask) {
+        configurationToCheck configuration.get()
         outputDir.set(layout.buildDirectory.dir(Paths.get("generated", "licensee", suffix, "files").toString()))
     }.map {
         layout.buildDirectory.dir(Paths.get("generated", "licensee", suffix).toString()).get()

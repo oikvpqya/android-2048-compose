@@ -1,42 +1,38 @@
 package com.alexjlockwood.twentyfortyeight
 
 import android.app.Application
-import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.remember
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import io.github.xxfast.kstore.file.storeOf
 import kotlinx.io.files.Path
-import java.io.File
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge(statusBarStyle = createStatusBarStyle())
         setContent {
-            val isDarkTheme = isSystemInDarkTheme()
-            val statusBarStyle = remember(isDarkTheme) {
-                if (isDarkTheme) {
-                    SystemBarStyle.dark(
-                        Color.argb(0xff, 0x30, 0x3f, 0x9f),
-                    )
-                } else {
-                    SystemBarStyle.light(
-                        Color.argb(0xff, 0x00, 0x99, 0xcc),
-                        Color.argb(0xff, 0x30, 0x3f, 0x9f),
-                    )
-                }
-            }
-            enableEdgeToEdge(statusBarStyle = statusBarStyle)
             App(repository = (application as GameRepositoryProvider).gameRepository)
+        }
+    }
+
+    private fun createStatusBarStyle(
+        darkScrim: Int = -13615201, // ARGB 0xff303f9f
+        lightScrim: Int = -16737844, // ARGB 0xff0099cc
+        isDarkTheme: Boolean = Build.VERSION.SDK_INT >= 30 && resources.configuration.isNightModeActive,
+    ): SystemBarStyle {
+        return if (isDarkTheme) {
+            SystemBarStyle.dark(darkScrim)
+        } else {
+            SystemBarStyle.light(lightScrim, darkScrim)
         }
     }
 }
@@ -46,7 +42,7 @@ class MainApplication : Application(), GameRepositoryProvider {
     override val gameRepository by lazy {
         DefaultGameRepository(
             store = storeOf(
-                file = Path(File(this.filesDir.absolutePath, USER_DATA_FILE_NAME).toString()),
+                file = Path(this.filesDir.absolutePath, USER_DATA_FILE_NAME),
                 default = UserData.EMPTY_USER_DATA,
             ),
         )
