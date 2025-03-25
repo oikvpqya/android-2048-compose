@@ -13,12 +13,13 @@ fun GameDialog(
     onConfirmListener: () -> Unit,
     onDismissListener: () -> Unit,
     modifier: Modifier = Modifier,
+    confirmEnabled: Boolean = true,
 ) {
     AlertDialog(
         modifier = modifier,
         title = { Text(text = title) },
         text = { Text(text = message) },
-        confirmButton = { TextButton(onClick = { onConfirmListener() }) { Text("OK") } },
+        confirmButton = { TextButton(onClick = { onConfirmListener() }, enabled = confirmEnabled) { Text("OK") } },
         dismissButton = { TextButton(onClick = { onDismissListener() }) { Text("Cancel") } },
         onDismissRequest = { onDismissListener() },
     )

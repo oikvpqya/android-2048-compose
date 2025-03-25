@@ -1,17 +1,14 @@
 package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,9 +16,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -45,47 +41,44 @@ fun GameUi(
     modifier: Modifier = Modifier,
     produceEvent: (GameUiEvent) -> Unit,
 ) {
-    var shouldShowAboutDialog by remember { mutableStateOf(false) }
-    var shouldShowNewGameDialog by remember { mutableStateOf(false) }
-    var swipeAngle by remember { mutableDoubleStateOf(0.0) }
+    var shouldShowAboutDialog by rememberSaveable { mutableStateOf(false) }
+    var shouldShowNewGameDialog by rememberSaveable { mutableStateOf(false) }
     BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
-    Scaffold(
-        modifier = modifier.windowInsetsPadding(WindowInsets.safeDrawing),
-        topBar = {
-            TopAppBar(
-                title = { Text(text = "2048 Compose") },
-                contentColor = Color.White,
-                backgroundColor = MaterialTheme.colors.primaryVariant,
-                actions = {
-                    IconButton(
-                        onClick = { produceEvent(GameUiEvent.Undo) },
-                        enabled = uiState is GameUiState.Success && uiState.canUndo,
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                    IconButton(
-                        onClick = { shouldShowNewGameDialog = true },
-                        enabled = uiState is GameUiState.Success,
-                    ) {
-                        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-                    }
-                    IconButton(
-                        onClick = { shouldShowAboutDialog = true },
-                    ) {
-                        Icon(imageVector = Icons.Filled.Info, contentDescription = null)
-                    }
-                },
-            )
-        },
-    ) { innerPadding ->
+    Column(
+        modifier = modifier.safeDrawingPadding(),
+    ) {
+        TopAppBar(
+            title = { Text(text = "2048 Compose") },
+            contentColor = Color.White,
+            backgroundColor = MaterialTheme.colors.primaryVariant,
+            actions = {
+                IconButton(
+                    onClick = { produceEvent(GameUiEvent.Undo) },
+                    enabled = uiState is GameUiState.Success && uiState.canUndo,
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                }
+                IconButton(
+                    onClick = { shouldShowNewGameDialog = true },
+                    enabled = uiState is GameUiState.Success,
+                ) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+                }
+                IconButton(
+                    onClick = { shouldShowAboutDialog = true },
+                ) {
+                    Icon(imageVector = Icons.Filled.Info, contentDescription = null)
+                }
+            },
+        )
         if (uiState !is GameUiState.Success) {
-            return@Scaffold
+            return@Column
         }
         GameLayout(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
                 .pointerInput(Unit) {
+                    var swipeAngle = 0.0
                     detectDragGestures(
                         onDrag = { change, dragAmount ->
                             change.consume()
@@ -130,6 +123,7 @@ fun GameUi(
             onDismissListener = {
                 shouldShowNewGameDialog = false
             },
+            confirmEnabled = uiState is GameUiState.Success,
         )
     } else if (shouldShowAboutDialog) {
         AboutDialog(
