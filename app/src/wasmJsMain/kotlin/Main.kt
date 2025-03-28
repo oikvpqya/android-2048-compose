@@ -2,6 +2,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.CanvasBasedWindow
 import com.alexjlockwood.twentyfortyeight.App
+import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
@@ -16,6 +17,8 @@ fun main() {
             store = storeOf(
                 key = USER_DATA_FILE_NAME,
                 default = UserData.EMPTY_USER_DATA,
+                enableCache = true,
+                format = DEFAULT_JSON,
             ),
         )
     }

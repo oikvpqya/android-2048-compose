@@ -8,6 +8,7 @@ import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import com.alexjlockwood.twentyfortyeight.ui.DefaultEventBus
 import com.alexjlockwood.twentyfortyeight.ui.EventBus
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
@@ -164,7 +165,7 @@ class PresenterTest {
     }
 }
 
-private fun createEventBus(): EventBus<GameUiEvent> = EventBus()
+private fun createEventBus(): EventBus<GameUiEvent> = DefaultEventBus()
 
 private fun createRepository(
     userData: UserData = UserData.EMPTY_USER_DATA,
@@ -174,7 +175,7 @@ private fun createRepository(
         return userData
     }
 
-    override suspend fun update(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int) {
+    override suspend fun update(data: UserData) {
         delay(100.milliseconds)
     }
 }
