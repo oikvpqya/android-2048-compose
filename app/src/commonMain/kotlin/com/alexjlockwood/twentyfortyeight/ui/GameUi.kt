@@ -45,7 +45,9 @@ fun GameUi(
     var shouldShowNewGameDialog by rememberSaveable { mutableStateOf(false) }
     BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
     Column(
-        modifier = modifier.safeDrawingPadding(),
+        modifier = modifier
+            .safeDrawingPadding()
+            .fillMaxSize(),
     ) {
         TopAppBar(
             title = { Text(text = "2048 Compose") },
