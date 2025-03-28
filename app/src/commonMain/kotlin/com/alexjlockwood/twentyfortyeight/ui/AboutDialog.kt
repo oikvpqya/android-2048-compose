@@ -14,17 +14,14 @@ import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.alexjlockwood.twentyfortyeight.domain.Artifact
 import com.alexjlockwood.twentyfortyeight.Res
-import kotlinx.serialization.json.Json
+import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -33,7 +30,10 @@ fun AboutDialog(
     modifier: Modifier = Modifier,
     onDismissListener: () -> Unit,
 ) {
-    var artifacts by remember { mutableStateOf(emptyList<Artifact>()) }
+    val artifacts by produceState(initialValue = emptyList()) {
+        val raw = Res.readBytes("files/artifacts.json").decodeToString()
+        value = DEFAULT_JSON.decodeFromString<List<Artifact>>(raw).sortedBy { "${it.groupId}:${it.artifactId}" }
+    }
     Dialog(
         onDismissRequest = { onDismissListener() },
     ) {
@@ -62,10 +62,6 @@ fun AboutDialog(
                 }
             }
         }
-    }
-    LaunchedEffect(Unit) {
-        artifacts = Json.decodeFromString<List<Artifact>>(Res.readBytes("files/artifacts.json").decodeToString())
-            .sortedBy { "${it.groupId}:${it.artifactId}" }
     }
 }
 

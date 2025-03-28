@@ -1,13 +1,10 @@
 package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.savedstate.serialization.decodeFromSavedState
 import androidx.savedstate.serialization.encodeToSavedState
 import com.alexjlockwood.twentyfortyeight.domain.Cell
@@ -145,21 +142,20 @@ class GamePresenter(
                 restore = { decodeFromSavedState(it) },
             ),
         ) { GamePresenterState() }
-        var uiState by remember { mutableStateOf<GameUiState>(GameUiState.Nothing) }
-        LaunchedEffect(eventFlow) {
+        val uiState by produceState<GameUiState>(initialValue = GameUiState.Nothing, key1 = eventFlow) {
             eventFlow.collect { event ->
                 when (event) {
                     GameUiEvent.Load -> {
-                        presenterState.load { uiState = it }
+                        presenterState.load { value = it }
                     }
                     is GameUiEvent.Move -> {
-                        presenterState.move(event.direction) { uiState = it }
+                        presenterState.move(event.direction) { value = it }
                     }
                     GameUiEvent.StartNewGame -> {
-                        presenterState.startNewGame { uiState = it }
+                        presenterState.startNewGame { value = it }
                     }
                     GameUiEvent.Undo -> {
-                        presenterState.undo { uiState = it }
+                        presenterState.undo { value = it }
                     }
                 }
             }
