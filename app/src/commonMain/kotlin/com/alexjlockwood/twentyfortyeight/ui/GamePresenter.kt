@@ -24,7 +24,7 @@ import kotlin.random.Random
 
 const val GRID_SIZE = 4
 private const val NUM_INITIAL_TILES = 2
-private val EMPTY_GRID = (0 until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
+val EMPTY_GRID = (0 until GRID_SIZE).map { arrayOfNulls<Tile?>(GRID_SIZE).toList() }
 private const val MAX_STACK = 100
 
 sealed interface GameUiEvent {
@@ -45,17 +45,28 @@ sealed interface GameUiState {
         val bestScore: Int,
         val isGameOver: Boolean,
         val canUndo: Boolean,
-    ) : GameUiState
+    ) : GameUiState {
+
+        constructor(
+            data: UserData,
+            canUndo: Boolean,
+            gridTileMovements: List<GridTileMovement> = data.grid.toMovements()
+        ) : this(
+            gridTileMovements = gridTileMovements,
+            currentScore = data.currentScore,
+            bestScore = data.bestScore,
+            isGameOver = checkIsGameOver(data.grid),
+            canUndo = canUndo,
+        )
+    }
 }
 
 @Serializable
-private data class GamePresenterState(
-    var grid: List<List<Tile?>>,
-    var currentScore: Int,
-    var bestScore: Int,
-    var moveCount: Int, // TODO: unused.
-    val stack: MutableList<UserData>,
-)
+private class GamePresenterState {
+
+    var data: UserData = UserData.EMPTY_USER_DATA
+    val stack: MutableList<UserData> = mutableListOf()
+}
 
 /**
  * Presenter that contains the logic that powers the 2048 game.
@@ -64,58 +75,34 @@ class GamePresenter(
     private val gameRepository: GameRepository,
 ) {
 
-    private suspend fun GamePresenterState.save() {
-        if (!checkIsGameOver(grid)) { gameRepository.update(grid, currentScore, bestScore) }
+    private suspend fun save(data: UserData) {
+        if (!checkIsGameOver(data.grid)) { gameRepository.update(data) }
     }
 
     private suspend fun GamePresenterState.startNewGame(
         updateUiState: (GameUiState) -> Unit,
     ) {
-        val gridTileMovements = (0 until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
-        val addedGridTiles = gridTileMovements.map { it.toGridTile }
-        grid = EMPTY_GRID.map { row, col, _ -> addedGridTiles.find { row == it.cell.row && col == it.cell.col }?.tile }
-        currentScore = 0
-        moveCount = 0
+        val (updatedGrid, updatedGridTileMovements) = startNewGame()
+        val updatedData = UserData(updatedGrid, 0, data.bestScore)
         stack.clear()
-        save()
-        updateUiState(GameUiState.Success(gridTileMovements, currentScore, bestScore, isGameOver = false, canUndo = false))
+        data = updatedData
+        save(updatedData)
+        updateUiState(GameUiState.Success(updatedData, false, updatedGridTileMovements))
     }
 
     private suspend fun GamePresenterState.move(
         direction: Direction,
         updateUiState: (GameUiState) -> Unit,
     ) {
-        var (updatedGrid, updatedGridTileMovements) = makeMove(grid, direction)
-
-        if (!hasGridChanged(updatedGridTileMovements)) {
-            // No tiles were moved.
-            return
-        }
-
+        val (updatedData, updatedGridTileMovements) = move(data, direction) ?: return
         // Push game data to stack.
-        stack.add(UserData(grid, currentScore, bestScore))
+        stack.add(data)
         while (stack.size > MAX_STACK) {
             stack.removeAt(0)
         }
-
-        // Increment the score.
-        val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
-        currentScore += scoreIncrement
-        bestScore = max(bestScore, currentScore)
-
-        // Attempt to add a new tile to the grid.
-        val addedTileMovement = createRandomAddedTile(updatedGrid)
-        if (addedTileMovement != null) {
-            val (cell, tile) = addedTileMovement.toGridTile
-            updatedGrid = updatedGrid.map { r, c, it -> if (cell.row == r && cell.col == c) tile else it }
-            updatedGridTileMovements = updatedGridTileMovements.toMutableList().apply { add(addedTileMovement) }
-        }
-
-        val gridTileMovements = updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 }
-        grid = updatedGrid
-        moveCount++
-        save()
-        updateUiState(GameUiState.Success(gridTileMovements, currentScore, bestScore, checkIsGameOver(grid), canUndo = true))
+        data = updatedData
+        save(updatedData)
+        updateUiState(GameUiState.Success(updatedData, stack.isNotEmpty(), updatedGridTileMovements))
     }
 
     private suspend fun GamePresenterState.undo(
@@ -123,34 +110,29 @@ class GamePresenter(
     ) {
         if (stack.isEmpty()) return
         // Pop and restore game from stack.
-        val (updatedGrid, updatedCurrentScore, updatedBestScore) = stack.removeAt(stack.lastIndex)
-        grid = updatedGrid ?: EMPTY_GRID
-        currentScore = updatedCurrentScore
-        bestScore = updatedBestScore
-        moveCount--
-        save()
-        updateUiState(GameUiState.Success(grid.toMovements(), currentScore, bestScore, checkIsGameOver(grid), stack.isNotEmpty()))
+        val updatedData = stack.removeAt(stack.lastIndex)
+        data = updatedData
+        save(updatedData)
+        updateUiState(GameUiState.Success(updatedData, stack.isNotEmpty()))
     }
 
     private suspend fun GamePresenterState.load(
         updateUiState: (GameUiState) -> Unit,
     ) {
-        if (grid != EMPTY_GRID) {
-            updateUiState(GameUiState.Success(grid.toMovements(), currentScore, bestScore, checkIsGameOver(grid), stack.isNotEmpty()))
+        if (data.grid != EMPTY_GRID) {
+            updateUiState(GameUiState.Success(data, stack.isNotEmpty()))
             return
         }
         updateUiState(GameUiState.Loading)
-        val userData = gameRepository.fetch()
-        bestScore = userData.bestScore
-        if (userData.grid == null) {
+        val localData = gameRepository.fetch()
+        if (localData.grid == EMPTY_GRID) {
             startNewGame(updateUiState)
-        } else {
-            // Restore a previously saved game.
-            grid = userData.grid
-            currentScore = userData.currentScore
-            stack.clear()
-            updateUiState(GameUiState.Success(grid.toMovements(), currentScore, bestScore, checkIsGameOver(grid), canUndo = false))
+            return
         }
+        // Restore a previously saved game.
+        stack.clear()
+        data = localData
+        updateUiState(GameUiState.Success(localData, false))
     }
 
     @Composable
@@ -162,15 +144,7 @@ class GamePresenter(
                 save = { encodeToSavedState(it) },
                 restore = { decodeFromSavedState(it) },
             ),
-        ) {
-            GamePresenterState(
-                grid = EMPTY_GRID,
-                currentScore = 0,
-                bestScore = 0,
-                moveCount = 0,
-                stack = mutableListOf(),
-            )
-        }
+        ) { GamePresenterState() }
         var uiState by remember { mutableStateOf<GameUiState>(GameUiState.Nothing) }
         LaunchedEffect(eventFlow) {
             eventFlow.collect { event ->
@@ -192,6 +166,42 @@ class GamePresenter(
         }
         return uiState
     }
+}
+
+private fun move(
+    data: UserData,
+    direction: Direction,
+): Pair<UserData, List<GridTileMovement>>? {
+    var (updatedGrid, updatedGridTileMovements) = makeMove(data.grid, direction)
+
+    if (!hasGridChanged(updatedGridTileMovements)) {
+        // No tiles were moved.
+        return null
+    }
+
+    // Increment the score.
+    val scoreIncrement = updatedGridTileMovements.filter { it.fromGridTile == null }.sumOf { it.toGridTile.tile.num }
+    val score = data.currentScore + scoreIncrement
+
+    // Attempt to add a new tile to the grid.
+    val addedTileMovement = createRandomAddedTile(updatedGrid)
+    if (addedTileMovement != null) {
+        val (cell, tile) = addedTileMovement.toGridTile
+        updatedGrid = updatedGrid.map { r, c, it -> if (cell.row == r && cell.col == c) tile else it }
+        updatedGridTileMovements = updatedGridTileMovements.toMutableList().apply { add(addedTileMovement) }
+    }
+
+    return Pair(
+        UserData(updatedGrid, score, max(data.bestScore, score)),
+        updatedGridTileMovements.sortedWith { a, _ -> if (a.fromGridTile == null) 1 else -1 },
+    )
+}
+
+private fun startNewGame(): Pair<List<List<Tile?>>, List<GridTileMovement>> {
+    val updatedGridTileMovements = (0 until NUM_INITIAL_TILES).mapNotNull { createRandomAddedTile(EMPTY_GRID) }
+    val addedGridTiles = updatedGridTileMovements.map { it.toGridTile }
+    val updatedGrid = EMPTY_GRID.map { row, col, _ -> addedGridTiles.find { row == it.cell.row && col == it.cell.col }?.tile }
+    return Pair(updatedGrid, updatedGridTileMovements)
 }
 
 private fun createRandomAddedTile(grid: List<List<Tile?>>): GridTileMovement? {

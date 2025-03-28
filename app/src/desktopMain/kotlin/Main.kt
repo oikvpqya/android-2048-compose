@@ -1,6 +1,7 @@
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
+import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
@@ -24,6 +25,8 @@ fun main() {
             store = storeOf(
                 file = Path(userDataDir.resolve(USER_DATA_FILE_NAME).toString()),
                 default = UserData.EMPTY_USER_DATA,
+                enableCache = true,
+                json = DEFAULT_JSON,
             ),
         )
     }

@@ -1,8 +1,10 @@
 package com.alexjlockwood.twentyfortyeight.repository
 
-import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import io.github.xxfast.kstore.KStore
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 const val USER_DATA_FILE_NAME = "user_data.json"
 
@@ -13,16 +15,19 @@ interface GameRepository {
 
     suspend fun fetch(): UserData
 
-    suspend fun update(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int)
+    suspend fun update(data: UserData)
 }
 
-class DefaultGameRepository(private val store: KStore<UserData>) : GameRepository {
+class DefaultGameRepository(
+    private val store: KStore<UserData>,
+    private val dispatcher: CoroutineContext = EmptyCoroutineContext,
+) : GameRepository {
 
     override suspend fun fetch(): UserData {
-        return store.get() ?: UserData.EMPTY_USER_DATA
+        return withContext(dispatcher) { store.get() ?: UserData.EMPTY_USER_DATA }
     }
 
-    override suspend fun update(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int) {
-        store.set(UserData(grid, currentScore, bestScore))
+    override suspend fun update(data: UserData) {
+        withContext(dispatcher) { store.set(data) }
     }
 }

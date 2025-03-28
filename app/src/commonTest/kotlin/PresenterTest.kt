@@ -175,7 +175,7 @@ private fun createRepository(
         return userData
     }
 
-    override suspend fun update(grid: List<List<Tile?>>, currentScore: Int, bestScore: Int) {
+    override suspend fun update(data: UserData) {
         delay(100.milliseconds)
     }
 }
