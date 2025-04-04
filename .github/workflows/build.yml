@@ -19,8 +19,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'jetbrains'
+          java-package: 'jdk+jcef'
           java-version: '17'
-          package-type: 'jdk+jcef'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
