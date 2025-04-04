@@ -7,15 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
-import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
-import io.github.xxfast.kstore.file.storeOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.io.files.Path
+import kotlin.io.path.Path
 
 class MainActivity : ComponentActivity() {
 
@@ -44,13 +39,7 @@ class MainApplication : Application(), GameRepositoryProvider {
 
     override val gameRepository by lazy {
         DefaultGameRepository(
-            store = storeOf(
-                file = Path(this.filesDir.absolutePath, USER_DATA_FILE_NAME),
-                default = UserData.EMPTY_USER_DATA,
-                enableCache = true,
-                json = DEFAULT_JSON,
-            ),
-            dispatcher = Dispatchers.IO + Job(),
+            file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
         )
     }
 }
