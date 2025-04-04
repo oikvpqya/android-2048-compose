@@ -6,12 +6,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.nio.file.Paths
 
 plugins {
-    alias libs.plugins.android.application
-    alias libs.plugins.cash.licensee
-    alias libs.plugins.compose.compiler
-    alias libs.plugins.jetbrains.compose
-    alias libs.plugins.kotlin.multiplatform
-    alias libs.plugins.kotlin.serialization
+    alias libs.plugins.androidApplication
+    alias libs.plugins.cashLicensee
+    alias libs.plugins.composeCompiler
+    alias libs.plugins.jetbrainsCompose
+    alias libs.plugins.kotlinMultiplatform
+    alias libs.plugins.kotlinSerialization
 }
 
 tasks.withType(KotlinCompile).configureEach {
@@ -40,44 +40,47 @@ kotlin {
                 implementation compose.components.resources
                 implementation compose.material
                 implementation compose.ui
-                implementation libs.jetbrains.compose.ui.backhandler
-                implementation libs.jetbrains.savedstate
-                implementation libs.kotlinx.coroutines.core
-                implementation libs.kotlinx.serialization.json
-                implementation libs.xxfast.kstore.common
+                implementation libs.jetbrainsComposeUiBackhandler
+                implementation libs.jetbrainsSavedstate
+                implementation libs.kotlinxCoroutinesCore
+                implementation libs.kotlinxSerializationJson
+            }
+        }
+
+        jvmAndroidMain {
+            dependsOn(commonMain)
+            dependencies {
+                implementation libs.kotlinxIoCore
+                implementation libs.kotlinxSerializationJsonIo
             }
         }
 
         androidMain {
+            dependsOn(jvmAndroidMain)
             dependencies {
-                implementation libs.androidx.core.ktx
-                implementation libs.androidx.activity.compose
-                implementation libs.kotlinx.io.core
-                implementation libs.xxfast.kstore.file
+                implementation libs.androidxActivityCompose
+                implementation libs.androidxCoreKtx
             }
         }
 
         desktopMain {
+            dependsOn(jvmAndroidMain)
             dependencies {
                 implementation compose.desktop.currentOs
-                implementation libs.harawata.appdirs
-                implementation libs.kotlinx.io.core
-                implementation libs.xxfast.kstore.file
+                implementation libs.harawataAppdirs
             }
         }
 
         wasmJsMain {
-            dependencies {
-                implementation libs.xxfast.kstore.storage
-            }
+            dependsOn(commonMain)
         }
 
         commonTest {
             dependencies {
-                implementation libs.cash.molecule
-                implementation libs.cash.turbine
-                implementation libs.kotlin.test
-                implementation libs.kotlinx.coroutines.test
+                implementation libs.cashMolecule
+                implementation libs.cashTurbine
+                implementation libs.kotlinTest
+                implementation libs.kotlinxCoroutinesTest
             }
         }
     }

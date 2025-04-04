@@ -12,29 +12,26 @@ kotlin = "2.1.20"
 kotlinxCoroutines = "1.10.1"
 kotlinxIo = "0.7.0"
 kotlinxSerialization = "1.8.0"
-xxfastKstore = "0.9.1"
 
 [libraries]
-androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
-androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
-cash-molecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "cashMolecule" }
-cash-turbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine" }
-harawata-appdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
-jetbrains-compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "jetbrainsCompose" }
-jetbrains-savedstate = { module = "org.jetbrains.androidx.savedstate:savedstate", version.ref = "jetbrainsSavedstate" }
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
-kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-xxfast-kstore-common = { module = "io.github.xxfast:kstore", version.ref = "xxfastKstore" }
-xxfast-kstore-file = { module = "io.github.xxfast:kstore-file", version.ref = "xxfastKstore" }
-xxfast-kstore-storage = { module = "io.github.xxfast:kstore-storage", version.ref = "xxfastKstore" }
+androidxActivityCompose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+cashMolecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "cashMolecule" }
+cashTurbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine" }
+harawataAppdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
+jetbrainsComposeUiBackhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "jetbrainsCompose" }
+jetbrainsSavedstate = { module = "org.jetbrains.androidx.savedstate:savedstate", version.ref = "jetbrainsSavedstate" }
+kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinxCoroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+kotlinxIoCore = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinxSerializationJsonIo = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-io", version.ref = "kotlinxSerialization" }
 
 [plugins]
-android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
-cash-licensee = { id = "app.cash.licensee", version.ref = "cashLicensee" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+cashLicensee = { id = "app.cash.licensee", version.ref = "cashLicensee" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
