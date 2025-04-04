@@ -72,8 +72,7 @@ kotlin {
         }
 
         wasmJsMain {
-            dependencies {
-            }
+            dependsOn(commonMain)
         }
 
         commonTest {
