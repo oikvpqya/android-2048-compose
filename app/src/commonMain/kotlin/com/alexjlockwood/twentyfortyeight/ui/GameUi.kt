@@ -134,7 +134,7 @@ fun GameUi(
             },
         )
     }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(uiState) {
         when (uiState) {
             GameUiState.Loading, is GameUiState.Success -> Unit
             GameUiState.Nothing -> {
