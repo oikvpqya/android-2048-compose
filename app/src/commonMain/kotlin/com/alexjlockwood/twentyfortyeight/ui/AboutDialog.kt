@@ -22,9 +22,7 @@ import androidx.compose.ui.window.Dialog
 import com.alexjlockwood.twentyfortyeight.domain.Artifact
 import com.alexjlockwood.twentyfortyeight.Res
 import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AboutDialog(
     modifier: Modifier = Modifier,
