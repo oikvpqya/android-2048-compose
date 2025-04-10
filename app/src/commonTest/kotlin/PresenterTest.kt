@@ -1,5 +1,6 @@
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
@@ -8,11 +9,10 @@ import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.ui.DefaultEventBus
-import com.alexjlockwood.twentyfortyeight.ui.EventBus
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUiState
+import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -25,12 +25,18 @@ class PresenterTest {
 
     @Test
     fun produceEvent() = runTest {
-        val eventBus = createEventBus()
+        val presenter = GamePresenter(createRepository())
         moleculeFlow(RecompositionMode.Immediate) {
-            remember { GamePresenter(createRepository()) }.uiState(eventBus.eventFlow)
+            LaunchedEffect(Unit) {
+                presenter.eventFlow.collect { event ->
+                    presenter.handleEvent(event)
+                }
+            }
+            val uiState by presenter.uiStateFlow.collectAsState()
+            uiState
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Load)
+            presenter.produceEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
             assertIs<GameUiState.Success>(awaitItem())
         }
@@ -38,13 +44,19 @@ class PresenterTest {
 
     @Test
     fun launchedEffect() = runTest {
+        val repository = createRepository()
         moleculeFlow(RecompositionMode.Immediate) {
-            val eventBus = remember { createEventBus() }
-            val uiState = remember { GamePresenter(createRepository()) }.uiState(eventBus.eventFlow)
-            LaunchedEffect(Unit) {
+            val presenter = rememberGamePresenter(repository)
+            LaunchedEffect(presenter) {
+                presenter.eventFlow.collect { event ->
+                    presenter.handleEvent(event)
+                }
+            }
+            val uiState by presenter.uiStateFlow.collectAsState()
+            LaunchedEffect(uiState) {
                 when (uiState) {
                     GameUiState.Nothing -> {
-                        eventBus.produceEvent(GameUiEvent.Load)
+                        presenter.produceEvent(GameUiEvent.Load)
                     }
                     GameUiState.Loading, is GameUiState.Success -> Unit
                 }
@@ -59,17 +71,15 @@ class PresenterTest {
 
     @Test
     fun load() = runTest {
-        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        moleculeFlow(RecompositionMode.Immediate) {
-            remember { GamePresenter(createRepository(userData)) }.uiState(eventBus.eventFlow)
-        }.test {
+        val presenter = GamePresenter(createRepository(userData))
+        presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Load)
+            presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
 
             val item = awaitItem()
@@ -81,21 +91,19 @@ class PresenterTest {
 
     @Test
     fun startNewGame() = runTest {
-        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        moleculeFlow(RecompositionMode.Immediate)  {
-            remember { GamePresenter(createRepository(userData)) }.uiState(eventBus.eventFlow)
-        }.test {
+        val presenter = GamePresenter(createRepository(userData))
+        presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Load)
+            presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
             assertIs<GameUiState.Success>(awaitItem())
 
-            eventBus.produceEvent(GameUiEvent.StartNewGame)
+            presenter.handleEvent(GameUiEvent.StartNewGame)
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
             assertTrue { item.gridTileMovements.size == 2 }
@@ -104,21 +112,19 @@ class PresenterTest {
 
     @Test
     fun move() = runTest {
-        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        moleculeFlow(RecompositionMode.Immediate)  {
-            remember { GamePresenter(createRepository(userData)) }.uiState(eventBus.eventFlow)
-        }.test {
+        val presenter = GamePresenter(createRepository(userData))
+        presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Load)
+            presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
             assertIs<GameUiState.Success>(awaitItem())
 
-            eventBus.produceEvent(GameUiEvent.Move(Direction.WEST))
+            presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
             val tile = item.gridTileMovements.map {
@@ -134,23 +140,21 @@ class PresenterTest {
 
     @Test
     fun undo() = runTest {
-        val eventBus = createEventBus()
         val userData = UserData.EMPTY_USER_DATA.copy(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
         )
-        moleculeFlow(RecompositionMode.Immediate)  {
-            remember { GamePresenter(createRepository(userData)) }.uiState(eventBus.eventFlow)
-        }.test {
+        val presenter = GamePresenter(createRepository(userData))
+        presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Load)
+            presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
             assertIs<GameUiState.Success>(awaitItem())
-            eventBus.produceEvent(GameUiEvent.Move(Direction.WEST))
+            presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             assertIs<GameUiState.Success>(awaitItem())
 
-            eventBus.produceEvent(GameUiEvent.Undo)
+            presenter.handleEvent(GameUiEvent.Undo)
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
             val tile = item.gridTileMovements.map {
@@ -164,8 +168,6 @@ class PresenterTest {
         }
     }
 }
-
-private fun createEventBus(): EventBus<GameUiEvent> = DefaultEventBus()
 
 private fun createRepository(
     userData: UserData = UserData.EMPTY_USER_DATA,
