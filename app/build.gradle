@@ -2,8 +2,11 @@ import app.cash.licensee.LicenseeTask
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 plugins {
     alias libs.plugins.androidApplication
@@ -14,7 +17,7 @@ plugins {
     alias libs.plugins.kotlinSerialization
 }
 
-tasks.withType(KotlinCompile).configureEach {
+tasks.withType(KotlinJvmCompile).configureEach {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
@@ -92,7 +95,7 @@ android {
 
     defaultConfig {
         applicationId "com.alexjlockwood.twentyfortyeightcompose"
-        minSdk 26 // Minimal API available for kotlinx.io (java.nio.file.Files).
+        minSdk 26 // A minimal available API for java.nio.Files atomic movement.
         targetSdk 35
         versionCode 1
         versionName "1.0.0"
@@ -184,11 +187,19 @@ private static String replaceFirstCharWithUpperCase(String input) {
     return input.substring(0,1).toUpperCase() + input.substring(1)
 }
 
-private Provider<DirectoryProperty> licenseeResourcesDirectory(String suffix, Provider<Configuration> configuration) {
+private Provider<Directory> licenseeResourcesDirectory(String suffix, Provider<Configuration> configuration) {
     return tasks.register("licenseeGenerateResources${replaceFirstCharWithUpperCase(suffix)}", LicenseeTask) {
         configurationToCheck configuration.get()
-        outputDir.set(layout.buildDirectory.dir(Paths.get("generated", "licensee", suffix, "files").toString()))
+        outputDir.set(layout.projectDirectory.dir(Paths.get("reports", "licensee", suffix).toString()))
+        doLast {
+            Path from = Paths.get(layout.projectDirectory.toString(), "reports", "licensee", suffix, "artifacts.json")
+            Path to = Paths.get(layout.buildDirectory.get().toString(), "generated", "licensee", suffix, "files", "artifacts.json")
+            if (!Files.exists(to.parent)) {
+                Files.createDirectories(to.parent)
+            }
+            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
     }.map {
-        layout.buildDirectory.dir(Paths.get("generated", "licensee", suffix).toString()).get()
+        layout.buildDirectory.get().dir(Paths.get("generated", "licensee", suffix).toString())
     }
 }
