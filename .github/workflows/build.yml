@@ -29,7 +29,11 @@ jobs:
         run: ./gradlew :app:assemble
 
       - name: Test with Gradle
-        run: ./gradlew :app:desktopTest
+        run: |
+          ./gradlew :app:desktopTest
+          ./gradlew :app:testDebugTest
+          ./gradlew :app:testReleaseTest
+          ./gradlew :app:wasmJsBrowserTest
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4

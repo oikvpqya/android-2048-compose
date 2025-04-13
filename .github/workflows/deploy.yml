@@ -31,6 +31,9 @@ jobs:
       - name: Build WasmJs with Gradle
         run: ./gradlew :app:wasmJsBrowserDistribution
 
+      - name: Test with Gradle
+        run: ./gradlew :app:wasmJsBrowserTest
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

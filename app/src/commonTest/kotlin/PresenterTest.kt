@@ -71,7 +71,7 @@ class PresenterTest {
 
     @Test
     fun load() = runTest {
-        val userData = UserData.EMPTY_USER_DATA.copy(
+        val userData = UserData(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
@@ -91,7 +91,7 @@ class PresenterTest {
 
     @Test
     fun startNewGame() = runTest {
-        val userData = UserData.EMPTY_USER_DATA.copy(
+        val userData = UserData(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
@@ -112,7 +112,7 @@ class PresenterTest {
 
     @Test
     fun move() = runTest {
-        val userData = UserData.EMPTY_USER_DATA.copy(
+        val userData = UserData(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,
@@ -140,7 +140,7 @@ class PresenterTest {
 
     @Test
     fun undo() = runTest {
-        val userData = UserData.EMPTY_USER_DATA.copy(
+        val userData = UserData(
             grid = List(4) { List(4) { Tile(16) } },
             currentScore = 16,
             bestScore = 32,

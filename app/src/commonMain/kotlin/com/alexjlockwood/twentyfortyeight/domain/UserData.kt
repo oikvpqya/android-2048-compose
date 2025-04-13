@@ -10,6 +10,7 @@ data class UserData(
     val bestScore: Int
 ) {
     companion object {
-        val EMPTY_USER_DATA = UserData(grid = EMPTY_GRID, currentScore = 0, bestScore = 0)
+        val EMPTY_USER_DATA
+            get() = UserData(grid = EMPTY_GRID, currentScore = 0, bestScore = 0)
     }
 }
