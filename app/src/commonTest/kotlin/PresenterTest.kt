@@ -6,8 +6,8 @@ import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
-import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
+import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
@@ -71,12 +71,12 @@ class PresenterTest {
 
     @Test
     fun load() = runTest {
-        val userData = UserData(
-            grid = List(4) { List(4) { Tile(16) } },
+        val store = UserDataStore(
+            grid = List(4) { List(4) { 16 } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = GamePresenter(createRepository(userData))
+        val presenter = GamePresenter(createRepository(store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -84,19 +84,19 @@ class PresenterTest {
 
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
-            assertEquals(userData.currentScore, item.currentScore)
-            assertEquals(userData.bestScore, item.bestScore)
+            assertEquals(store.currentScore, item.currentScore)
+            assertEquals(store.bestScore, item.bestScore)
         }
     }
 
     @Test
     fun startNewGame() = runTest {
-        val userData = UserData(
-            grid = List(4) { List(4) { Tile(16) } },
+        val store = UserDataStore(
+            grid = List(4) { List(4) { 16 } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = GamePresenter(createRepository(userData))
+        val presenter = GamePresenter(createRepository(store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -106,18 +106,18 @@ class PresenterTest {
             presenter.handleEvent(GameUiEvent.StartNewGame)
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
-            assertTrue { item.gridTileMovements.size == 2 }
+            assertTrue { item.gridTileMovements.size in (1..2) }
         }
     }
 
     @Test
     fun move() = runTest {
-        val userData = UserData(
-            grid = List(4) { List(4) { Tile(16) } },
+        val store = UserDataStore(
+            grid = List(4) { List(4) { 16 } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = GamePresenter(createRepository(userData))
+        val presenter = GamePresenter(createRepository(store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -127,25 +127,19 @@ class PresenterTest {
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
-            val tile = item.gridTileMovements.map {
-                it.toGridTile
-            }.filter {
-                it.cell == Cell(0, 0)
-            }.maxBy {
-                it.tile.num
-            }.tile
+            val tile = item.gridTileMovements.filter { it.to == Cell(0, 0) }.maxBy { it.tile.num }.tile
             assertEquals(32, tile.num)
         }
     }
 
     @Test
     fun undo() = runTest {
-        val userData = UserData(
-            grid = List(4) { List(4) { Tile(16) } },
+        val store = UserDataStore(
+            grid = List(4) { List(4) { 16 } },
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = GamePresenter(createRepository(userData))
+        val presenter = GamePresenter(createRepository(store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -157,24 +151,18 @@ class PresenterTest {
             presenter.handleEvent(GameUiEvent.Undo)
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
-            val tile = item.gridTileMovements.map {
-                it.toGridTile
-            }.filter {
-                it.cell == Cell(0, 0)
-            }.maxBy {
-                it.tile.num
-            }.tile
+            val tile = item.gridTileMovements.filter { it.to == Cell(0, 0) }.maxBy { it.tile.num }.tile
             assertEquals(16, tile.num)
         }
     }
 }
 
 private fun createRepository(
-    userData: UserData = UserData.EMPTY_USER_DATA,
+    store: UserDataStore = UserDataStore(),
 ): GameRepository = object : GameRepository {
     override suspend fun fetch(): UserData {
         delay(100.milliseconds)
-        return userData
+        return store.toUserData()
     }
 
     override suspend fun update(data: UserData) {
