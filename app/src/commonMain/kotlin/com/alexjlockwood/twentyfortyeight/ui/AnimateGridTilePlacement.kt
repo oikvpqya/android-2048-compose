@@ -29,7 +29,7 @@ private data class AnimateGridTilePlacementElement(
     }
 
     override fun update(node: AnimateGridTilePlacementNode) {
-        node.update(gridTileMovement.toGridTile.cell, offset)
+        node.update(gridTileMovement.to, offset)
     }
 }
 
@@ -40,10 +40,10 @@ private class AnimateGridTilePlacementNode(
 
     // Each grid tile is laid out at (0,0) in the box. Shifting tiles are then translated
     // to their correct position in the grid, and added tiles are scaled from 0 to 1.
-    private val initialCell = gridTileMovement.toGridTile.cell
+    private val initialCell = gridTileMovement.to
     private var currentOffset = with(initialCell) { Offset(col * offset, row * offset) }
     private val animatedOffset = Animatable(currentOffset, Offset.VectorConverter)
-    private val animatedScale = Animatable(if (gridTileMovement.fromGridTile == null) 0f else 1f)
+    private val animatedScale = Animatable(if (gridTileMovement.from == null) 0f else 1f)
 
     override fun onAttach() {
         move(currentOffset)

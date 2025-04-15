@@ -2,6 +2,7 @@ package com.alexjlockwood.twentyfortyeight.repository
 
 import com.alexjlockwood.twentyfortyeight.domain.DEFAULT_JSON
 import com.alexjlockwood.twentyfortyeight.domain.UserData
+import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
@@ -36,23 +37,22 @@ class DefaultGameRepository(
             lock.withLock {
                 if (file.exists()) {
                     file.inputStream().asSource().buffered().use { source ->
-                        DEFAULT_JSON.decodeFromSource(source)
+                        DEFAULT_JSON.decodeFromSource<UserDataStore>(source)
                     }
-                } else {
-                    UserData.EMPTY_USER_DATA
-                }
-            }
+                } else null
+            }?.toUserData() ?: UserData()
         }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun update(data: UserData) {
+        val store = UserDataStore(data)
         withContext(coroutineContext) {
             lock.withLock {
                 val tempFile = createTempFile()
                 try {
                     tempFile.outputStream().asSink().buffered().use { sink ->
-                        DEFAULT_JSON.encodeToSink(data, sink)
+                        DEFAULT_JSON.encodeToSink(store, sink)
                     }
                 } catch (exception: Throwable) {
                     tempFile.deleteIfExists()

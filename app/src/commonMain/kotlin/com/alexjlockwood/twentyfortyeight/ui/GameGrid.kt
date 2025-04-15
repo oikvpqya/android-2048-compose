@@ -54,7 +54,7 @@ fun GameGrid(
             },
     ) {
         for (gridTileMovement in gridTileMovements) {
-            val (num, id) = gridTileMovement.toGridTile.tile
+            val (num, id) = gridTileMovement.tile
             // In 2048, tiles are frequently being removed and added to the grid. As a result,
             // the order in which grid tiles are rendered is constantly changing after each
             // recomposition. In order to ensure that each tile animates from its correct
