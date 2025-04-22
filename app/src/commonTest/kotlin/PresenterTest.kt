@@ -1,10 +1,8 @@
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
-import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
@@ -12,11 +10,13 @@ import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUiState
+import com.alexjlockwood.twentyfortyeight.ui.collectAsGameUiState
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -27,13 +27,7 @@ class PresenterTest {
     fun produceEvent() = runTest {
         val presenter = GamePresenter(createRepository())
         moleculeFlow(RecompositionMode.Immediate) {
-            LaunchedEffect(Unit) {
-                presenter.eventFlow.collect { event ->
-                    presenter.handleEvent(event)
-                }
-            }
-            val uiState by presenter.uiStateFlow.collectAsState()
-            uiState
+            presenter.uiStateFlow.collectAsGameUiState(presenter).value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.produceEvent(GameUiEvent.Load)
@@ -47,12 +41,7 @@ class PresenterTest {
         val repository = createRepository()
         moleculeFlow(RecompositionMode.Immediate) {
             val presenter = rememberGamePresenter(repository)
-            LaunchedEffect(presenter) {
-                presenter.eventFlow.collect { event ->
-                    presenter.handleEvent(event)
-                }
-            }
-            val uiState by presenter.uiStateFlow.collectAsState()
+            val uiState by presenter.uiStateFlow.collectAsGameUiState(presenter)
             LaunchedEffect(uiState) {
                 when (uiState) {
                     GameUiState.Nothing -> {
@@ -127,8 +116,7 @@ class PresenterTest {
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
-            val tile = item.gridTileMovements.filter { it.to == Cell(0, 0) }.maxBy { it.tile.num }.tile
-            assertEquals(32, tile.num)
+            assertEquals(32, item.gridTileMovements.maxBy { it.tile.num }.tile.num)
         }
     }
 
@@ -144,15 +132,59 @@ class PresenterTest {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
-            assertIs<GameUiState.Success>(awaitItem())
+            val item1 = awaitItem()
+            assertIs<GameUiState.Success>(item1)
+            assertFalse(item1.canUndo)
+
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
-            assertIs<GameUiState.Success>(awaitItem())
+            val item2 = awaitItem()
+            assertIs<GameUiState.Success>(item2)
+            assertTrue(item2.canUndo)
 
             presenter.handleEvent(GameUiEvent.Undo)
-            val item = awaitItem()
-            assertIs<GameUiState.Success>(item)
-            val tile = item.gridTileMovements.filter { it.to == Cell(0, 0) }.maxBy { it.tile.num }.tile
-            assertEquals(16, tile.num)
+            val item3 = awaitItem()
+            assertIs<GameUiState.Success>(item3)
+            assertTrue(item3.gridTileMovements.all { it.tile.num == 16 })
+        }
+    }
+
+    @Test
+    fun gameOver() = runTest {
+        val grid: List<List<Int>> = let { _ ->
+            var num = 2
+            val grid = MutableList(4) {
+                MutableList(4) {
+                    val ret = num
+                    num *= 2
+                    ret
+                }
+            }
+            grid[0][0] = 32
+            grid
+        }
+        val store = UserDataStore(
+            grid = grid,
+            currentScore = 16,
+            bestScore = 32,
+        )
+        val presenter = GamePresenter(createRepository(store))
+        presenter.uiStateFlow.test {
+            assertIs<GameUiState.Nothing>(awaitItem())
+            presenter.handleEvent(GameUiEvent.Load)
+            assertIs<GameUiState.Loading>(awaitItem())
+            val item1 = awaitItem()
+            assertIs<GameUiState.Success>(item1)
+            assertFalse(item1.isGameOver)
+            assertFalse(item1.canUndo)
+
+            presenter.handleEvent(GameUiEvent.Move(Direction.NORTH))
+            val item2 = awaitItem()
+            assertIs<GameUiState.Success>(item2)
+            assertTrue(item2.isGameOver)
+            assertTrue(item2.canUndo)
+
+            presenter.handleEvent(GameUiEvent.Undo)
+            assertIs<GameUiState.Success>(awaitItem())
         }
     }
 }
