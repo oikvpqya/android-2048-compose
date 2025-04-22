@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.AppTheme
 import com.alexjlockwood.twentyfortyeight.ui.GameUi
+import com.alexjlockwood.twentyfortyeight.ui.collectAsGameUiState
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 
 @Composable
@@ -12,12 +13,10 @@ fun App(repository: GameRepository) {
     val presenter = rememberGamePresenter(gameRepository = repository)
     AppTheme {
         Surface {
-            presenter.UiStateProvider { uiState ->
-                GameUi(
-                    uiState = uiState,
-                    produceEvent = { presenter.produceEvent(it) },
-                )
-            }
+            GameUi(
+                uiState = presenter.uiStateFlow.collectAsGameUiState(presenter).value,
+                produceEvent = presenter::produceEvent,
+            )
         }
     }
 }

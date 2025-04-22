@@ -2,11 +2,11 @@ package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.savedstate.SavedState
 import androidx.savedstate.serialization.decodeFromSavedState
 import androidx.savedstate.serialization.encodeToSavedState
 import com.alexjlockwood.twentyfortyeight.domain.Cell
@@ -16,6 +16,7 @@ import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import kotlin.math.max
@@ -68,13 +69,21 @@ data class GamePresenterState(
 fun rememberGamePresenter(
     gameRepository: GameRepository,
 ): GamePresenter {
-    return rememberSaveable(
-        gameRepository,
+    val presenterState = rememberSaveable(
         saver = Saver(
-            save = { it.encodePresenterStateToSavedState() },
-            restore = { GamePresenter(gameRepository = gameRepository, presenterState = decodeFromSavedState(it)) },
+            save = { encodeToSavedState(it) },
+            restore = { decodeFromSavedState(it) },
         ),
-    ) { GamePresenter(gameRepository = gameRepository) }
+    ) { GamePresenterState() }
+    return remember(
+        gameRepository, presenterState,
+    ) { GamePresenter(gameRepository, presenterState) }
+}
+
+@Composable
+fun StateFlow<GameUiState>.collectAsGameUiState(presenter: GamePresenter): State<GameUiState> {
+    LaunchedEffect(presenter) { presenter.eventFlow.collect(presenter::handleEvent) }
+    return collectAsState()
 }
 
 /**
@@ -156,23 +165,6 @@ class GamePresenter(
                 undo()
             }
         }
-    }
-
-    @Composable
-    fun UiStateProvider(
-        content: @Composable (GameUiState) -> Unit,
-    ) {
-        LaunchedEffect(Unit) {
-            eventFlow.collect { event ->
-                handleEvent(event)
-            }
-        }
-        val uiState by uiStateFlow.collectAsState()
-        content(uiState)
-    }
-
-    fun encodePresenterStateToSavedState(): SavedState {
-        return encodeToSavedState(presenterState)
     }
 }
 
