@@ -10,7 +10,6 @@ import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUiState
-import com.alexjlockwood.twentyfortyeight.ui.collectAsGameUiState
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
@@ -27,7 +26,7 @@ class PresenterTest {
     fun produceEvent() = runTest {
         val presenter = GamePresenter(createRepository())
         moleculeFlow(RecompositionMode.Immediate) {
-            presenter.uiStateFlow.collectAsGameUiState(presenter).value
+            presenter.collectAsUiState().value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.produceEvent(GameUiEvent.Load)
@@ -41,7 +40,7 @@ class PresenterTest {
         val repository = createRepository()
         moleculeFlow(RecompositionMode.Immediate) {
             val presenter = rememberGamePresenter(repository)
-            val uiState by presenter.uiStateFlow.collectAsGameUiState(presenter)
+            val uiState by presenter.collectAsUiState()
             LaunchedEffect(uiState) {
                 when (uiState) {
                     GameUiState.Nothing -> {

@@ -1,14 +1,7 @@
-package com.alexjlockwood.twentyfortyeight.ui
+package com.alexjlockwood.twentyfortyeight.runtime
 
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-
-interface EventBus<EVENT> {
-
-    val eventFlow: SharedFlow<EVENT>
-    fun produceEvent(event: EVENT)
-}
 
 class EventBusImpl<EVENT> : EventBus<EVENT> {
 
