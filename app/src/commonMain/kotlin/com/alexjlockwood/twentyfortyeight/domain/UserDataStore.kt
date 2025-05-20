@@ -22,9 +22,8 @@ data class UserDataStore(
 }
 
 private fun List<GridTileMovement>.toGrid(): List<List<Int?>> {
-    return MutableList(GRID_SIZE) { MutableList<Int?>(GRID_SIZE) { null } }.apply {
-        this@toGrid.forEach { (tile, _, to) -> this@apply[to.row][to.col] = tile.num }
-    }
+    val values = groupBy { it.to }.mapValues { (_, value) -> value.maxBy { it.tile.id }.tile.num }
+    return List(GRID_SIZE) { row -> List(GRID_SIZE) { col -> values[Cell(row, col)] } }
 }
 
 private fun List<List<Int?>>.toNoopTileMovements(): List<GridTileMovement> {

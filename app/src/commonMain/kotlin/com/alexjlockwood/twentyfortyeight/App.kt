@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.ui.AppTheme
 import com.alexjlockwood.twentyfortyeight.ui.GameUi
-import com.alexjlockwood.twentyfortyeight.ui.collectAsGameUiState
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 
 @Composable
@@ -14,7 +13,7 @@ fun App(repository: GameRepository) {
     AppTheme {
         Surface {
             GameUi(
-                uiState = presenter.uiStateFlow.collectAsGameUiState(presenter).value,
+                uiState = presenter.collectAsUiState().value,
                 produceEvent = presenter::produceEvent,
             )
         }
