@@ -91,10 +91,12 @@ class PresenterTest {
             assertIs<GameUiState.Loading>(awaitItem())
             assertIs<GameUiState.Success>(awaitItem())
 
-            presenter.handleEvent(GameUiEvent.StartNewGame)
-            val item = awaitItem()
-            assertIs<GameUiState.Success>(item)
-            assertTrue { item.gridTileMovements.size in (1..2) }
+            repeat(50) {
+                presenter.handleEvent(GameUiEvent.StartNewGame)
+                val item = awaitItem()
+                assertIs<GameUiState.Success>(item)
+                assertTrue { item.gridTileMovements.size == 2 }
+            }
         }
     }
 

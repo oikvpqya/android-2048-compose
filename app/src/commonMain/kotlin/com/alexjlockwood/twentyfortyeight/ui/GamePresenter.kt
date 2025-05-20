@@ -96,7 +96,9 @@ class GamePresenter(
     }
 
     private suspend fun startNewGame() {
-        val updatedTileMovements = initializeTiles()
+        val updatedTileMovements = buildList<GridTileMovement> {
+            repeat(NUM_INITIAL_TILES) { add(createRandomAddedTile(map { it.to })) }
+        }
         val updatedData = UserData(updatedTileMovements, 0, presenterState.data.bestScore)
         presenterState.stack.clear()
         presenterState.data = updatedData
@@ -183,10 +185,6 @@ private fun moveTiles(
     }.sortedWith { a, _ -> if (a.from == null) 1 else -1 }
 
     return UserData(addedTileMovements, score, max(data.bestScore, score))
-}
-
-private fun initializeTiles(): List<GridTileMovement> {
-    return List(NUM_INITIAL_TILES) { createRandomAddedTile(emptyList()) }.distinctBy { it.to }
 }
 
 private fun createRandomAddedTile(cells: List<Cell>): GridTileMovement {
