@@ -200,105 +200,92 @@ private fun createRandomAddedTile(cells: List<Cell>): GridTileMovement {
 }
 
 private fun makeMove(movements: List<GridTileMovement>, direction: Direction): List<GridTileMovement> {
-    val numRotations = when (direction) {
-        Direction.WEST -> 0
-        Direction.SOUTH -> 1
-        Direction.EAST -> 2
-        Direction.NORTH -> 3
-    }
-    val cellTileMap = movements.associate { movement -> movement.to to movement.tile }
-
-    // Rotate the grid so that we can process it as if the user has swiped their
-    // finger from right to left.
-    val updatedGrid = List(GRID_SIZE) { rowIndex ->
-        List(GRID_SIZE) { colIndex ->
-            val cell = getRotatedCellAt(rowIndex, colIndex, numRotations)
-            if (cellTileMap.containsKey(cell)) cellTileMap[cell] else null
-        }
-    }
-
-    val movedTileMovements = mutableListOf<GridTileMovement>()
-    repeat(GRID_SIZE) { currentRowIndex ->
-        val mutableRowTiles = updatedGrid[currentRowIndex].toMutableList()
-        var lastSeenTileIndex: Int? = null
-        var lastSeenEmptyIndex: Int? = null
-        repeat(GRID_SIZE) { currentColIndex ->
-            val currentTile = mutableRowTiles[currentColIndex]
-            if (currentTile == null) {
-                // We are looking at an empty cell in the grid.
-                if (lastSeenEmptyIndex == null) {
-                    // Keep track of the first empty index we find.
-                    lastSeenEmptyIndex = currentColIndex
-                }
-                return@repeat
-            }
-
-            // Otherwise, we have encountered a tile that could either be shifted,
-            // merged, or not moved at all.
-            val currentCell = getRotatedCellAt(currentRowIndex, currentColIndex, numRotations)
-
-            if (lastSeenTileIndex == null) {
-                // This is the first tile in the list that we've found.
-                if (lastSeenEmptyIndex == null) {
-                    // Keep the tile at its same location.
-                    movedTileMovements.add(GridTileMovement.noop(currentTile, currentCell))
-                    lastSeenTileIndex = currentColIndex
-                } else {
-                    // Shift the tile to the location of the furthest empty cell in the list.
-                    val targetCell = getRotatedCellAt(currentRowIndex, lastSeenEmptyIndex, numRotations)
-                    movedTileMovements.add(GridTileMovement.shift(currentTile, currentCell, targetCell))
-
-                    mutableRowTiles[lastSeenEmptyIndex] = currentTile
-                    mutableRowTiles[currentColIndex] = null
-                    lastSeenTileIndex = lastSeenEmptyIndex
-                    lastSeenEmptyIndex++
-                }
-            } else {
-                // There is a previous tile in the list that we need to process.
-                if (mutableRowTiles[lastSeenTileIndex]!!.num == currentTile.num) {
-                    // Shift the tile to the location where it will be merged.
-                    val targetCell = getRotatedCellAt(currentRowIndex, lastSeenTileIndex, numRotations)
-                    movedTileMovements.add(GridTileMovement.shift(currentTile, currentCell, targetCell))
-
-                    // Merge the current tile with the previous tile.
-                    val addedTile = currentTile * 2
-                    movedTileMovements.add(GridTileMovement.add(addedTile, targetCell))
-
-                    mutableRowTiles[lastSeenTileIndex] = addedTile
-                    mutableRowTiles[currentColIndex] = null
-                    lastSeenTileIndex = null
-                    if (lastSeenEmptyIndex == null) {
-                        lastSeenEmptyIndex = currentColIndex
+    return buildList {
+        val tiles = movements.groupBy { it.to }.mapValues { (_, value) -> value.maxBy { it.tile.id }.tile }
+        repeat(GRID_SIZE) { currentRowIndex ->
+            // Rotate tiles so that we can process it as if the user has swiped their
+            // finger from right to left
+            val mutableRowTiles = MutableList(GRID_SIZE) { tiles[getRotatedCellAt(direction, currentRowIndex, it)] }
+            var lastSeenTileIndex: Int? = null
+            var lastSeenEmptyIndex: Int? = null
+            repeat(GRID_SIZE) { currentColIndex ->
+                val currentTile = mutableRowTiles[currentColIndex]
+                val currentCell = getRotatedCellAt(direction, currentRowIndex, currentColIndex)
+                when {
+                    currentTile == null -> {
+                        // We are looking at an empty cell in the grid.
+                        if (lastSeenEmptyIndex == null) {
+                            // Keep track of the first empty index we find.
+                            lastSeenEmptyIndex = currentColIndex
+                        }
                     }
-                } else {
-                    if (lastSeenEmptyIndex == null) {
+
+                    // Otherwise, we have encountered a tile that could either be shifted,
+                    // merged, or not moved at all.
+                    lastSeenTileIndex == null -> {
+                        // This is the first tile in the list that we've found.
+                        if (lastSeenEmptyIndex == null) {
+                            // Keep the tile at its same location.
+                            add(GridTileMovement.noop(currentTile, currentCell))
+                            lastSeenTileIndex = currentColIndex
+                        } else {
+                            // Shift the tile to the location of the furthest empty cell in the list.
+                            val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenEmptyIndex)
+                            add(GridTileMovement.shift(currentTile, currentCell, targetCell))
+
+                            mutableRowTiles[lastSeenEmptyIndex] = currentTile
+                            mutableRowTiles[currentColIndex] = null
+                            lastSeenTileIndex = lastSeenEmptyIndex
+                            lastSeenEmptyIndex++
+                        }
+                    }
+
+                    // There is a previous tile in the list that we need to process.
+                    mutableRowTiles[lastSeenTileIndex]!!.num == currentTile.num -> {
+                        // Shift the tile to the location where it will be merged.
+                        val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenTileIndex)
+                        add(GridTileMovement.shift(currentTile, currentCell, targetCell))
+
+                        // Merge the current tile with the previous tile.
+                        val addedTile = currentTile * 2
+                        add(GridTileMovement.add(addedTile, targetCell))
+
+                        mutableRowTiles[lastSeenTileIndex] = addedTile
+                        mutableRowTiles[currentColIndex] = null
+                        lastSeenTileIndex = null
+                        if (lastSeenEmptyIndex == null) {
+                            lastSeenEmptyIndex = currentColIndex
+                        }
+                    }
+
+                    lastSeenEmptyIndex == null -> {
                         // Keep the tile at its same location.
-                        movedTileMovements.add(GridTileMovement.noop(currentTile, currentCell))
-                    } else {
+                        add(GridTileMovement.noop(currentTile, currentCell))
+                        lastSeenTileIndex++
+                    }
+
+                    else -> {
                         // Shift the current tile towards the previous tile.
-                        val targetCell = getRotatedCellAt(currentRowIndex, lastSeenEmptyIndex, numRotations)
-                        movedTileMovements.add(GridTileMovement.shift(currentTile, currentCell, targetCell))
+                        val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenEmptyIndex)
+                        add(GridTileMovement.shift(currentTile, currentCell, targetCell))
 
                         mutableRowTiles[lastSeenEmptyIndex] = currentTile
                         mutableRowTiles[currentColIndex] = null
+                        lastSeenTileIndex++
                         lastSeenEmptyIndex++
                     }
-                    lastSeenTileIndex++
                 }
             }
         }
     }
-
-    return movedTileMovements
 }
 
-private fun getRotatedCellAt(row: Int, col: Int, numRotations: Int): Cell {
-    return when (numRotations) {
-        0 -> Cell(row, col)
-        1 -> Cell(GRID_SIZE - 1 - col, row)
-        2 -> Cell(GRID_SIZE - 1 - row, GRID_SIZE - 1 - col)
-        3 -> Cell(col, GRID_SIZE - 1 - row)
-        else -> throw IllegalArgumentException("numRotations must be an integer in [0,3]")
+private fun getRotatedCellAt(direction: Direction, row: Int, col: Int): Cell {
+    return when (direction) {
+        Direction.WEST -> Cell(row, col)
+        Direction.SOUTH -> Cell(GRID_SIZE - 1 - col, row)
+        Direction.EAST -> Cell(GRID_SIZE - 1 - row, GRID_SIZE - 1 - col)
+        Direction.NORTH -> Cell(col, GRID_SIZE - 1 - row)
     }
 }
 
