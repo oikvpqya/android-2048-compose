@@ -12,11 +12,9 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
 import kotlinx.serialization.Serializable
 import kotlin.math.max
 import kotlin.random.Random
@@ -67,7 +65,7 @@ data class GamePresenterState(
 @Composable
 fun rememberGamePresenter(
     gameRepository: GameRepository,
-): GamePresenter {
+): Presenter<GameUiEvent, GameUiState> {
     val presenterState = rememberSaveable(
         saver = Saver(
             save = { encodeToSavedState(it) },
@@ -76,20 +74,17 @@ fun rememberGamePresenter(
     ) { GamePresenterState() }
     return remember(
         gameRepository, presenterState,
-    ) { GamePresenter(gameRepository, presenterState) }
+    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameRepository, presenterState) }
 }
 
 /**
  * Presenter that contains the logic that powers the 2048 game.
  */
 class GamePresenter(
+    base: Presenter<GameUiEvent, GameUiState>,
     private val gameRepository: GameRepository,
-    private val presenterState: GamePresenterState = GamePresenterState(),
-    eventBus: EventBus<GameUiEvent> = EventBusImpl(),
-) : Presenter<GameUiEvent, GameUiState>, EventBus<GameUiEvent> by eventBus {
-
-    private val mutableUiStateFlow = MutableStateFlow<GameUiState>(GameUiState.Nothing)
-    override val uiStateFlow = mutableUiStateFlow.asStateFlow()
+    private val presenterState: GamePresenterState,
+) : Presenter<GameUiEvent, GameUiState> by base {
 
     private suspend fun save(data: UserData) {
         if (!checkIsGameOver(data.movements)) { gameRepository.update(data) }
@@ -103,7 +98,7 @@ class GamePresenter(
         presenterState.stack.clear()
         presenterState.data = updatedData
         save(updatedData)
-        mutableUiStateFlow.value = GameUiState.Success(updatedData, false)
+        produceUiState(GameUiState.Success(updatedData, false))
     }
 
     private suspend fun move(
@@ -117,7 +112,7 @@ class GamePresenter(
         }
         presenterState.data = updatedData
         save(updatedData)
-        mutableUiStateFlow.value = GameUiState.Success(updatedData, presenterState.stack.isNotEmpty())
+        produceUiState(GameUiState.Success(updatedData, presenterState.stack.isNotEmpty()))
     }
 
     private suspend fun undo() {
@@ -126,15 +121,15 @@ class GamePresenter(
         val updatedData = presenterState.stack.removeAt(presenterState.stack.lastIndex)
         presenterState.data = updatedData
         save(updatedData)
-        mutableUiStateFlow.value = GameUiState.Success(updatedData, presenterState.stack.isNotEmpty())
+        produceUiState(GameUiState.Success(updatedData, presenterState.stack.isNotEmpty()))
     }
 
     private suspend fun load() {
         if (presenterState.data.movements.isNotEmpty()) {
-            mutableUiStateFlow.value = GameUiState.Success(presenterState.data, presenterState.stack.isNotEmpty())
+            produceUiState(GameUiState.Success(presenterState.data, presenterState.stack.isNotEmpty()))
             return
         }
-        mutableUiStateFlow.value = GameUiState.Loading
+        produceUiState(GameUiState.Loading)
         val userData = gameRepository.fetch()
         if (userData.movements.isEmpty()) {
             startNewGame()
@@ -143,7 +138,7 @@ class GamePresenter(
         // Restore a previously saved game.
         presenterState.stack.clear()
         presenterState.data = userData
-        mutableUiStateFlow.value = GameUiState.Success(userData, false)
+        produceUiState(GameUiState.Success(userData, false))
     }
 
     override suspend fun handleEvent(event: GameUiEvent) {
