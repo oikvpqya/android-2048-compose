@@ -2,10 +2,7 @@ package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.savedstate.serialization.decodeFromSavedState
-import androidx.savedstate.serialization.encodeToSavedState
+import androidx.compose.runtime.saveable.rememberSerializable
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
@@ -66,11 +63,8 @@ data class GamePresenterState(
 fun rememberGamePresenter(
     gameRepository: GameRepository,
 ): Presenter<GameUiEvent, GameUiState> {
-    val presenterState = rememberSaveable(
-        saver = Saver(
-            save = { encodeToSavedState(it) },
-            restore = { decodeFromSavedState(it) },
-        ),
+    val presenterState = rememberSerializable(
+        serializer = GamePresenterState.serializer(),
     ) { GamePresenterState() }
     return remember(
         gameRepository, presenterState,

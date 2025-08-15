@@ -45,7 +45,6 @@ kotlin {
                 implementation compose.ui
                 implementation libs.jetbrainsComposeMaterialIconsCore
                 implementation libs.jetbrainsComposeUiBackhandler
-                implementation libs.jetbrainsSavedstate
                 implementation libs.kotlinxCoroutinesCore
                 implementation libs.kotlinxSerializationJson
             }
