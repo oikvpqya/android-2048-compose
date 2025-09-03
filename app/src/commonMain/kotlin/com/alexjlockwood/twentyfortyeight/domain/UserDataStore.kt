@@ -1,6 +1,6 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
-import com.alexjlockwood.twentyfortyeight.ui.GRID_SIZE
+import com.alexjlockwood.twentyfortyeight.repository.GRID_SIZE
 import kotlinx.serialization.Serializable
 
 @Serializable
