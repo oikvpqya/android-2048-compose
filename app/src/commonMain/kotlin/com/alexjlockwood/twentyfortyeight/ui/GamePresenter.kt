@@ -2,10 +2,6 @@ package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.savedstate.serialization.decodeFromSavedState
-import androidx.savedstate.serialization.encodeToSavedState
 import com.alexjlockwood.twentyfortyeight.domain.Cell
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
@@ -15,13 +11,12 @@ import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
-import kotlinx.serialization.Serializable
 import kotlin.math.max
 import kotlin.random.Random
 
 const val GRID_SIZE = 4
 private const val NUM_INITIAL_TILES = 2
-private const val MAX_STACK = 100
+private const val MAX_LIST_SIZE = 100
 
 sealed interface GameUiEvent {
 
@@ -50,95 +45,37 @@ sealed interface GameUiState {
             gridTileMovements = data.movements,
             currentScore = data.currentScore,
             bestScore = data.bestScore,
-            isGameOver = checkIsGameOver(data.movements),
+            isGameOver = data.checkIsGameOver(),
             canUndo = canUndo,
         )
     }
 }
 
-@Serializable
-data class GamePresenterState(
-    var data: UserData = UserData(),
-    val stack: MutableList<UserData> = mutableListOf(),
-)
-
 @Composable
 fun rememberGamePresenter(
-    gameRepository: GameRepository,
+    gameUseCase: GameUseCase,
 ): Presenter<GameUiEvent, GameUiState> {
-    val presenterState = rememberSaveable(
-        saver = Saver(
-            save = { encodeToSavedState(it) },
-            restore = { decodeFromSavedState(it) },
-        ),
-    ) { GamePresenterState() }
     return remember(
-        gameRepository, presenterState,
-    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameRepository, presenterState) }
+        gameUseCase,
+    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameUseCase) }
 }
 
-/**
- * Presenter that contains the logic that powers the 2048 game.
- */
 class GamePresenter(
     base: Presenter<GameUiEvent, GameUiState>,
-    private val gameRepository: GameRepository,
-    private val presenterState: GamePresenterState,
+    private val gameUseCase: GameUseCase,
 ) : Presenter<GameUiEvent, GameUiState> by base {
 
-    private suspend fun save(data: UserData) {
-        if (!checkIsGameOver(data.movements)) { gameRepository.update(data) }
-    }
-
-    private suspend fun startNewGame() {
-        val updatedTileMovements = buildList<GridTileMovement> {
-            repeat(NUM_INITIAL_TILES) { add(createRandomAddedTile(map { it.to })) }
-        }
-        val updatedData = UserData(updatedTileMovements, 0, presenterState.data.bestScore)
-        presenterState.stack.clear()
-        presenterState.data = updatedData
-        save(updatedData)
-        produceUiState(GameUiState.Success(updatedData, false))
-    }
-
-    private suspend fun move(
-        direction: Direction,
-    ) {
-        val updatedData = moveTiles(presenterState.data, direction) ?: return
-        // Push game data to stack.
-        presenterState.stack.add(presenterState.data)
-        while (presenterState.stack.size > MAX_STACK) {
-            presenterState.stack.removeAt(0)
-        }
-        presenterState.data = updatedData
-        save(updatedData)
-        produceUiState(GameUiState.Success(updatedData, presenterState.stack.isNotEmpty()))
-    }
-
-    private suspend fun undo() {
-        if (presenterState.stack.isEmpty()) return
-        // Pop and restore game from stack.
-        val updatedData = presenterState.stack.removeAt(presenterState.stack.lastIndex)
-        presenterState.data = updatedData
-        save(updatedData)
-        produceUiState(GameUiState.Success(updatedData, presenterState.stack.isNotEmpty()))
-    }
-
     private suspend fun load() {
-        if (presenterState.data.movements.isNotEmpty()) {
-            produceUiState(GameUiState.Success(presenterState.data, presenterState.stack.isNotEmpty()))
+        gameUseCase.load(true)?.let { data ->
+            produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
             return
         }
         produceUiState(GameUiState.Loading)
-        val userData = gameRepository.fetch()
-        if (userData.movements.isEmpty()) {
-            startNewGame()
+        gameUseCase.load(false)?.let { data ->
+            produceUiState(GameUiState.Success(data, false))
             return
         }
-        // Restore a previously saved game.
-        presenterState.stack.clear()
-        presenterState.data = userData
-        produceUiState(GameUiState.Success(userData, false))
+        produceUiState(GameUiState.Success(gameUseCase.startNewGame(), false))
     }
 
     override suspend fun handleEvent(event: GameUiEvent) {
@@ -147,13 +84,82 @@ class GamePresenter(
                 load()
             }
             is GameUiEvent.Move -> {
-                move(event.direction)
+                gameUseCase.move(event.direction)?.let { data ->
+                    produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
+                }
             }
             GameUiEvent.StartNewGame -> {
-                startNewGame()
+                produceUiState(GameUiState.Success(gameUseCase.startNewGame(), false))
             }
             GameUiEvent.Undo -> {
-                undo()
+                gameUseCase.undo()?.let { data ->
+                    produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * UseCase that contains the logic that powers the 2048 game.
+ */
+class GameUseCase(
+    private val gameRepository: GameRepository,
+    maxStackSize: Int = MAX_LIST_SIZE,
+) {
+
+    var data = UserData()
+    private val mutableStack = MutableLimitedList<UserData>(mutableListOf(), maxStackSize)
+    val stack: List<UserData>
+        get() = mutableStack
+
+    suspend fun save(data: UserData) {
+        if (!checkIsGameOver(data.movements)) { gameRepository.update(data) }
+    }
+
+    suspend fun startNewGame(): UserData {
+        val updatedTileMovements = buildList<GridTileMovement> {
+            repeat(NUM_INITIAL_TILES) { add(createRandomAddedTile(map { it.to })) }
+        }
+        val updatedData = UserData(updatedTileMovements, 0, data.bestScore)
+        mutableStack.clear()
+        data = updatedData
+        save(updatedData)
+        return updatedData
+    }
+
+    suspend fun move(
+        direction: Direction,
+    ): UserData? {
+        val updatedData = moveTiles(data, direction) ?: return null
+        // Push game data to stack.
+        mutableStack.add(data)
+        data = updatedData
+        save(updatedData)
+        return updatedData
+    }
+
+    suspend fun undo(): UserData? {
+        if (mutableStack.isEmpty()) return null
+        // Pop and restore game from stack.
+        val updatedData = mutableStack.removeAt(mutableStack.lastIndex)
+        data = updatedData
+        save(updatedData)
+        return updatedData
+    }
+
+    suspend fun load(useCache: Boolean): UserData? {
+        return if (useCache) {
+            if (data.movements.isNotEmpty()) data else null
+        } else {
+            val userData = gameRepository.fetch()
+            if (userData.movements.isNotEmpty()) {
+                // Restore a previously saved game.
+                mutableStack.clear()
+                data = userData
+                userData
+            } else {
+                null
             }
         }
     }
@@ -292,4 +298,25 @@ private fun checkIsGameOver(movements: List<GridTileMovement>): Boolean {
 private fun hasGridChanged(movements: List<GridTileMovement>): Boolean {
     // The grid has changed if any of the tiles have moved to a different location.
     return movements.any { (_, from, to) -> from == null || from != to }
+}
+
+private class MutableLimitedList<T>(
+    private val base: MutableList<T>,
+    private val maxSize: Int = MAX_LIST_SIZE,
+) : MutableList<T> by base {
+
+    override fun add(element: T): Boolean {
+        return if (base.add(element)) {
+            while (size > maxSize) {
+                removeAt(0)
+            }
+            true
+        } else {
+            false
+        }
+    }
+}
+
+fun UserData.checkIsGameOver(): Boolean {
+    return checkIsGameOver(movements)
 }

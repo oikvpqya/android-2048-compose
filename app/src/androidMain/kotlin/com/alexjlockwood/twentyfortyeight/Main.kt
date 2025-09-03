@@ -8,8 +8,8 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
-import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
+import com.alexjlockwood.twentyfortyeight.ui.GameUseCase
 import kotlin.io.path.Path
 
 class MainActivity : ComponentActivity() {
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = createStatusBarStyle())
         setContent {
-            App(repository = (application as GameRepositoryProvider).gameRepository)
+            App(gameUseCase = (application as GameUseCaseProvider).gameUseCase)
         }
     }
 
@@ -35,16 +35,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-class MainApplication : Application(), GameRepositoryProvider {
+class MainApplication : Application(), GameUseCaseProvider {
 
-    override val gameRepository by lazy {
-        DefaultGameRepository(
-            file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
+    override val gameUseCase by lazy {
+        GameUseCase(
+            gameRepository = DefaultGameRepository(
+                file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
+            ),
         )
     }
 }
 
-private interface GameRepositoryProvider {
+private interface GameUseCaseProvider {
 
-    val gameRepository: GameRepository
+    val gameUseCase: GameUseCase
 }
