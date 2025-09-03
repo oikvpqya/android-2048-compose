@@ -2,8 +2,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
+import com.alexjlockwood.twentyfortyeight.repository.GameUseCase
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
-import com.alexjlockwood.twentyfortyeight.ui.GameUseCase
 import net.harawata.appdirs.AppDirsFactory
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories

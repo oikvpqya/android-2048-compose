@@ -7,6 +7,7 @@ import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
+import com.alexjlockwood.twentyfortyeight.repository.GameUseCase
 import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
@@ -14,7 +15,6 @@ import com.alexjlockwood.twentyfortyeight.runtime.collectAsUiState
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUiState
-import com.alexjlockwood.twentyfortyeight.ui.GameUseCase
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest

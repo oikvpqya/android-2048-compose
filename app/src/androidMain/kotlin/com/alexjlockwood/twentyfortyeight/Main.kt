@@ -8,8 +8,8 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
+import com.alexjlockwood.twentyfortyeight.repository.GameUseCase
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
-import com.alexjlockwood.twentyfortyeight.ui.GameUseCase
 import kotlin.io.path.Path
 
 class MainActivity : ComponentActivity() {

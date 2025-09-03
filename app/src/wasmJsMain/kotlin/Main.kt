@@ -3,7 +3,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.CanvasBasedWindow
 import com.alexjlockwood.twentyfortyeight.App
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
-import com.alexjlockwood.twentyfortyeight.ui.GameUseCase
+import com.alexjlockwood.twentyfortyeight.repository.GameUseCase
 import kotlinx.browser.document
 import org.w3c.dom.HTMLDivElement
 
