@@ -13,9 +13,9 @@ private const val NUM_INITIAL_TILES = 2
 private const val MAX_LIST_SIZE = 100
 
 /**
- * UseCase that contains the logic that powers the 2048 game.
+ * Statement that contains the logic that powers the 2048 game.
  */
-class GameUseCase(
+class GameState(
     private val gameRepository: GameRepository,
     maxStackSize: Int = MAX_LIST_SIZE,
 ) {

@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
-import com.alexjlockwood.twentyfortyeight.repository.GameUseCase
+import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.checkIsGameOver
 import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
@@ -47,29 +47,29 @@ sealed interface GameUiState {
 
 @Composable
 fun rememberGamePresenter(
-    gameUseCase: GameUseCase,
+    gameState: GameState,
 ): Presenter<GameUiEvent, GameUiState> {
     return remember(
-        gameUseCase,
-    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameUseCase) }
+        gameState,
+    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameState) }
 }
 
 class GamePresenter(
     base: Presenter<GameUiEvent, GameUiState>,
-    private val gameUseCase: GameUseCase,
+    private val gameState: GameState,
 ) : Presenter<GameUiEvent, GameUiState> by base {
 
     private suspend fun load() {
-        gameUseCase.load(true)?.let { data ->
-            produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
+        gameState.load(true)?.let { data ->
+            produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
             return
         }
         produceUiState(GameUiState.Loading)
-        gameUseCase.load(false)?.let { data ->
+        gameState.load(false)?.let { data ->
             produceUiState(GameUiState.Success(data, false))
             return
         }
-        produceUiState(GameUiState.Success(gameUseCase.startNewGame(), false))
+        produceUiState(GameUiState.Success(gameState.startNewGame(), false))
     }
 
     override suspend fun handleEvent(event: GameUiEvent, coroutineContext: CoroutineContext) {
@@ -78,16 +78,16 @@ class GamePresenter(
                 load()
             }
             is GameUiEvent.Move -> {
-                gameUseCase.move(event.direction)?.let { data ->
-                    produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
+                gameState.move(event.direction)?.let { data ->
+                    produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
                 }
             }
             GameUiEvent.StartNewGame -> {
-                produceUiState(GameUiState.Success(gameUseCase.startNewGame(), false))
+                produceUiState(GameUiState.Success(gameState.startNewGame(), false))
             }
             GameUiEvent.Undo -> {
-                gameUseCase.undo()?.let { data ->
-                    produceUiState(GameUiState.Success(data, gameUseCase.stack.isNotEmpty()))
+                gameState.undo()?.let { data ->
+                    produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
                 }
             }
         }
