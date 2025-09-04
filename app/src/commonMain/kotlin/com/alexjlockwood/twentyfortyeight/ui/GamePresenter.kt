@@ -10,6 +10,7 @@ import com.alexjlockwood.twentyfortyeight.repository.checkIsGameOver
 import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
+import kotlin.coroutines.CoroutineContext
 
 sealed interface GameUiEvent {
 
@@ -71,7 +72,7 @@ class GamePresenter(
         produceUiState(GameUiState.Success(gameUseCase.startNewGame(), false))
     }
 
-    override suspend fun handleEvent(event: GameUiEvent) {
+    override suspend fun handleEvent(event: GameUiEvent, coroutineContext: CoroutineContext) {
         when (event) {
             GameUiEvent.Load -> {
                 load()

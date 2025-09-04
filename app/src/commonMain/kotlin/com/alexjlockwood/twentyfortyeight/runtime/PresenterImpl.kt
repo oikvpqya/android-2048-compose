@@ -2,6 +2,7 @@ package com.alexjlockwood.twentyfortyeight.runtime
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.coroutines.CoroutineContext
 
 class PresenterImpl<EVENT, STATE>(
     base: EventBus<EVENT>,
@@ -15,5 +16,5 @@ class PresenterImpl<EVENT, STATE>(
         mutableUiStateFlow.value = uiState
     }
 
-    override suspend fun handleEvent(event: EVENT) {}
+    override suspend fun handleEvent(event: EVENT, coroutineContext: CoroutineContext) {}
 }
