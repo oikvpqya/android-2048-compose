@@ -8,11 +8,10 @@ cashTurbine = "1.2.0"
 harawataAppdirs = "1.4.0"
 jetbrainsCompose = "1.8.1"
 jetbrainsComposeMaterialIconsCore = "1.7.3"
-jetbrainsSavedstate = "1.3.0"
-kotlin = "2.1.21"
+kotlin = "2.2.10"
 kotlinxCoroutines = "1.10.2"
-kotlinxIo = "0.7.0"
-kotlinxSerialization = "1.8.1"
+kotlinxIo = "0.8.0"
+kotlinxSerialization = "1.9.0"
 
 [libraries]
 androidxActivityCompose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
@@ -22,7 +21,6 @@ cashTurbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine"
 harawataAppdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
 jetbrainsComposeMaterialIconsCore = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "jetbrainsComposeMaterialIconsCore" }
 jetbrainsComposeUiBackhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "jetbrainsCompose" }
-jetbrainsSavedstate = { module = "org.jetbrains.androidx.savedstate:savedstate", version.ref = "jetbrainsSavedstate" }
 kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }

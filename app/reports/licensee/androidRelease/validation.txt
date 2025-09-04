@@ -98,43 +98,39 @@ androidx.graphics:graphics-path:1.0.1
  - SPDX identifier 'Apache-2.0' allowed
 androidx.interpolator:interpolator:1.0.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-common:2.9.0
+androidx.lifecycle:lifecycle-common:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-common-jvm:2.9.0
+androidx.lifecycle:lifecycle-common-jvm:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-livedata-core:2.9.0
+androidx.lifecycle:lifecycle-livedata-core:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-process:2.9.0
+androidx.lifecycle:lifecycle-process:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime:2.9.0
+androidx.lifecycle:lifecycle-runtime:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-android:2.9.0
+androidx.lifecycle:lifecycle-runtime-android:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-compose:2.9.0
+androidx.lifecycle:lifecycle-runtime-compose:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-compose-android:2.9.0
+androidx.lifecycle:lifecycle-runtime-compose-android:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-ktx:2.9.0
+androidx.lifecycle:lifecycle-runtime-ktx:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-ktx-android:2.9.0
+androidx.lifecycle:lifecycle-runtime-ktx-android:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel:2.9.0
+androidx.lifecycle:lifecycle-viewmodel:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel-android:2.9.0
+androidx.lifecycle:lifecycle-viewmodel-android:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0
+androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.0
- - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.9.0
+androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7
  - SPDX identifier 'Apache-2.0' allowed
 androidx.profileinstaller:profileinstaller:1.4.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.savedstate:savedstate:1.3.0
+androidx.savedstate:savedstate:1.2.1
  - SPDX identifier 'Apache-2.0' allowed
-androidx.savedstate:savedstate-android:1.3.0
- - SPDX identifier 'Apache-2.0' allowed
-androidx.savedstate:savedstate-ktx:1.3.0
+androidx.savedstate:savedstate-ktx:1.2.1
  - SPDX identifier 'Apache-2.0' allowed
 androidx.startup:startup-runtime:1.1.1
  - SPDX identifier 'Apache-2.0' allowed
@@ -146,15 +142,13 @@ com.google.guava:listenablefuture:1.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains:annotations:23.0.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-common:2.9.0
+org.jetbrains.androidx.lifecycle:lifecycle-common:2.8.4
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.androidx.lifecycle:lifecycle-runtime:2.8.4
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.4
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.8.4
- - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.savedstate:savedstate:1.3.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.animation:animation:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
@@ -198,7 +192,7 @@ org.jetbrains.compose.ui:ui-unit:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.ui:ui-util:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib:2.1.21
+org.jetbrains.kotlin:kotlin-stdlib:2.2.10
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2
  - SPDX identifier 'Apache-2.0' allowed
@@ -206,25 +200,25 @@ org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-io-bytestring:0.7.0
+org.jetbrains.kotlinx:kotlinx-io-bytestring:0.8.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:0.7.0
+org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:0.8.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-io-core:0.7.0
+org.jetbrains.kotlinx:kotlinx-io-core:0.8.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.7.0
+org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.8.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-json-io:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-json-io:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1
+org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jspecify:jspecify:1.0.0
  - SPDX identifier 'Apache-2.0' allowed
