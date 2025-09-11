@@ -12,7 +12,7 @@ interface Presenter<EVENT, STATE> : EventBus<EVENT> {
 
     val uiStateFlow: StateFlow<STATE>
     fun produceUiState(uiState: STATE)
-    suspend fun handleEvent(event: EVENT, coroutineContext: CoroutineContext = EmptyCoroutineContext)
+    fun handleEvent(event: EVENT, coroutineContext: CoroutineContext = EmptyCoroutineContext)
 }
 
 @Composable
@@ -23,4 +23,10 @@ fun <EVENT, STATE> Presenter<EVENT, STATE>.collectAsUiState(): State<STATE> {
         }
     }
     return uiStateFlow.collectAsState()
+}
+
+fun <EVENT, STATE> buildPresenter(
+    initialUiState: STATE,
+): Presenter<EVENT, STATE> {
+    return PresenterImpl(EventBusImpl(), initialUiState)
 }

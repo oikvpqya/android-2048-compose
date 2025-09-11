@@ -7,9 +7,10 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.checkIsGameOver
-import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
-import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
+import com.alexjlockwood.twentyfortyeight.runtime.buildPresenter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 sealed interface GameUiEvent {
@@ -51,13 +52,12 @@ fun rememberGamePresenter(
 ): Presenter<GameUiEvent, GameUiState> {
     return remember(
         gameState,
-    ) { GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), gameState) }
+    ) { GamePresenter(gameState) }
 }
 
 class GamePresenter(
-    base: Presenter<GameUiEvent, GameUiState>,
     private val gameState: GameState,
-) : Presenter<GameUiEvent, GameUiState> by base {
+) : Presenter<GameUiEvent, GameUiState> by buildPresenter(GameUiState.Nothing) {
 
     private suspend fun load() {
         gameState.load(true)?.let { data ->
@@ -72,10 +72,12 @@ class GamePresenter(
         produceUiState(GameUiState.Success(gameState.startNewGame(), false))
     }
 
-    override suspend fun handleEvent(event: GameUiEvent, coroutineContext: CoroutineContext) {
+    override fun handleEvent(event: GameUiEvent, coroutineContext: CoroutineContext) {
         when (event) {
             GameUiEvent.Load -> {
-                load()
+                CoroutineScope(coroutineContext).launch {
+                    load()
+                }
             }
             is GameUiEvent.Move -> {
                 gameState.move(event.direction)?.let { data ->

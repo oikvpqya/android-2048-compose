@@ -8,9 +8,7 @@ import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
-import com.alexjlockwood.twentyfortyeight.runtime.EventBusImpl
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
-import com.alexjlockwood.twentyfortyeight.runtime.PresenterImpl
 import com.alexjlockwood.twentyfortyeight.runtime.collectAsUiState
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
@@ -18,6 +16,7 @@ import com.alexjlockwood.twentyfortyeight.ui.GameUiState
 import com.alexjlockwood.twentyfortyeight.ui.rememberGamePresenter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -29,7 +28,7 @@ class PresenterTest {
 
     @Test
     fun produceEvent() = runTest {
-        val presenter = createPresenter(createState())
+        val presenter = createPresenter(createState(coroutineContext))
         moleculeFlow(RecompositionMode.Immediate) {
             presenter.collectAsUiState().value
         }.test {
@@ -42,7 +41,7 @@ class PresenterTest {
 
     @Test
     fun launchedEffect() = runTest {
-        val state = createState()
+        val state = createState(coroutineContext)
         moleculeFlow(RecompositionMode.Immediate) {
             val presenter = rememberGamePresenter(state)
             val uiState by presenter.collectAsUiState()
@@ -69,7 +68,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createState(coroutineContext, store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -89,7 +88,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createState(coroutineContext, store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -112,7 +111,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createState(coroutineContext, store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -133,7 +132,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val state = createState(store, 1)
+        val state = createState(coroutineContext, store, 1)
         val presenter = createPresenter(state)
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
@@ -183,7 +182,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createState(coroutineContext, store))
         presenter.uiStateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -219,13 +218,15 @@ private fun createRepository(
 }
 
 private fun createState(
+    coroutineContext: CoroutineContext,
     store: UserDataStore = UserDataStore(),
     maxStackSize: Int = 100,
 ): GameState = GameState(
     gameRepository = createRepository(store),
+    coroutineContext = coroutineContext,
     maxStackSize = maxStackSize,
 )
 
 private fun createPresenter(
     state: GameState,
-): Presenter<GameUiEvent, GameUiState> = GamePresenter(PresenterImpl(EventBusImpl(), GameUiState.Nothing), state)
+): Presenter<GameUiEvent, GameUiState> = GamePresenter(state)
