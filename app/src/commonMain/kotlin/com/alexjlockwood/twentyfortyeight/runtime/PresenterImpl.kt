@@ -16,5 +16,5 @@ class PresenterImpl<EVENT, STATE>(
         mutableUiStateFlow.value = uiState
     }
 
-    override suspend fun handleEvent(event: EVENT, coroutineContext: CoroutineContext) {}
+    override fun handleEvent(event: EVENT, coroutineContext: CoroutineContext) {}
 }
