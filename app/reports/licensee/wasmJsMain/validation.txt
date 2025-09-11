@@ -98,9 +98,9 @@ org.jetbrains.compose.ui:ui-util-wasm-js:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.ui:ui-wasm-js:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib:2.2.10
+org.jetbrains.kotlin:kotlin-stdlib:2.2.20
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.10
+org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.20
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:atomicfu:0.26.1
  - SPDX identifier 'Apache-2.0' allowed
