@@ -1,6 +1,6 @@
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.window.CanvasBasedWindow
+import androidx.compose.ui.window.ComposeViewport
 import com.alexjlockwood.twentyfortyeight.App
 import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
@@ -12,7 +12,7 @@ fun main() {
     val gameState by lazy {
         GameState(gameRepository = DefaultGameRepository())
     }
-    CanvasBasedWindow(canvasElementId = "ComposeTarget") {
+    ComposeViewport(viewportContainerId = "app") {
         App(gameState = gameState)
         LaunchedEffect(Unit) {
             document.getElementById("indicator")?.let { element ->
