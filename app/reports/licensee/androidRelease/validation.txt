@@ -192,7 +192,7 @@ org.jetbrains.compose.ui:ui-unit:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.ui:ui-util:1.8.1
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib:2.2.10
+org.jetbrains.kotlin:kotlin-stdlib:2.2.20
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2
  - SPDX identifier 'Apache-2.0' allowed
