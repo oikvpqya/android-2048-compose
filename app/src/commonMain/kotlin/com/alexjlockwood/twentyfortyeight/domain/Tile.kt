@@ -1,11 +1,8 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
-import kotlinx.serialization.Serializable
-
 /**
  * Container class that wraps a number and a unique ID for use in the grid.
  */
-@Serializable
 data class Tile(
     val num: Int,
     val id: Int = tileIdCounter++,
