@@ -1,11 +1,8 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
-import kotlinx.serialization.Serializable
-
 /**
  * Container class describing how a tile has moved within the grid.
  */
-@Serializable
 data class GridTileMovement(
     val tile: Tile,
     val from: Cell?,
