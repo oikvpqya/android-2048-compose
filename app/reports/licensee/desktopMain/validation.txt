@@ -8,17 +8,33 @@ androidx.collection:collection:1.5.0
  - SPDX identifier 'Apache-2.0' allowed
 androidx.collection:collection-jvm:1.5.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-common:2.8.5
+androidx.compose.runtime:runtime:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-common-jvm:2.8.5
+androidx.compose.runtime:runtime-annotation:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime:2.8.5
+androidx.compose.runtime:runtime-annotation-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-runtime-desktop:2.8.5
+androidx.compose.runtime:runtime-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel:2.8.5
+androidx.lifecycle:lifecycle-common:2.9.2
  - SPDX identifier 'Apache-2.0' allowed
-androidx.lifecycle:lifecycle-viewmodel-desktop:2.8.5
+androidx.lifecycle:lifecycle-common-jvm:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-runtime:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-runtime-desktop:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-viewmodel:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-viewmodel-desktop:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.lifecycle:lifecycle-viewmodel-savedstate-desktop:2.9.2
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.savedstate:savedstate:1.3.1
+ - SPDX identifier 'Apache-2.0' allowed
+androidx.savedstate:savedstate-desktop:1.3.1
  - SPDX identifier 'Apache-2.0' allowed
 net.harawata:appdirs:1.4.0
  - SPDX identifier 'Apache-2.0' allowed
@@ -28,103 +44,111 @@ net.java.dev.jna:jna-platform:5.16.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains:annotations:23.0.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-common:2.8.4
+org.jetbrains.androidx.lifecycle:lifecycle-common:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-runtime:2.8.4
+org.jetbrains.androidx.lifecycle:lifecycle-runtime:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.4
+org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose-desktop:2.8.4
+org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose-desktop:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.8.4
+org.jetbrains.androidx.lifecycle:lifecycle-viewmodel:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.animation:animation:1.8.1
+org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate:2.9.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.animation:animation-core:1.8.1
+org.jetbrains.androidx.savedstate:savedstate:1.3.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.animation:animation-core-desktop:1.8.1
+org.jetbrains.androidx.savedstate:savedstate-compose:1.3.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.animation:animation-desktop:1.8.1
+org.jetbrains.androidx.savedstate:savedstate-compose-desktop:1.3.4
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.annotation-internal:annotation:1.8.1
+org.jetbrains.compose.animation:animation:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.collection-internal:collection:1.8.1
+org.jetbrains.compose.animation:animation-core:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.components:components-resources:1.8.1
+org.jetbrains.compose.animation:animation-core-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.components:components-resources-desktop:1.8.1
+org.jetbrains.compose.animation:animation-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.desktop:desktop:1.8.1
+org.jetbrains.compose.annotation-internal:annotation:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.desktop:desktop-jvm:1.8.1
+org.jetbrains.compose.collection-internal:collection:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.desktop:desktop-jvm-linux-x64:1.8.1
+org.jetbrains.compose.components:components-resources:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.foundation:foundation:1.8.1
+org.jetbrains.compose.components:components-resources-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.foundation:foundation-desktop:1.8.1
+org.jetbrains.compose.desktop:desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.foundation:foundation-layout:1.8.1
+org.jetbrains.compose.desktop:desktop-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.foundation:foundation-layout-desktop:1.8.1
+org.jetbrains.compose.desktop:desktop-jvm-linux-x64:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.material:material:1.8.1
+org.jetbrains.compose.foundation:foundation:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.material:material-desktop:1.8.1
+org.jetbrains.compose.foundation:foundation-desktop:1.9.0
+ - SPDX identifier 'Apache-2.0' allowed
+org.jetbrains.compose.foundation:foundation-layout:1.9.0
+ - SPDX identifier 'Apache-2.0' allowed
+org.jetbrains.compose.foundation:foundation-layout-desktop:1.9.0
+ - SPDX identifier 'Apache-2.0' allowed
+org.jetbrains.compose.material:material:1.9.0
+ - SPDX identifier 'Apache-2.0' allowed
+org.jetbrains.compose.material:material-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.material:material-icons-core:1.7.3
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.compose.material:material-icons-core-desktop:1.7.3
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.material:material-ripple:1.8.1
+org.jetbrains.compose.material:material-ripple:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.material:material-ripple-desktop:1.8.1
+org.jetbrains.compose.material:material-ripple-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.runtime:runtime:1.8.1
+org.jetbrains.compose.runtime:runtime:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.runtime:runtime-desktop:1.8.1
+org.jetbrains.compose.runtime:runtime-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.runtime:runtime-saveable:1.8.1
+org.jetbrains.compose.runtime:runtime-saveable:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.runtime:runtime-saveable-desktop:1.8.1
+org.jetbrains.compose.runtime:runtime-saveable-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui:1.8.1
+org.jetbrains.compose.ui:ui:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-backhandler:1.8.1
+org.jetbrains.compose.ui:ui-backhandler:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-backhandler-desktop:1.8.1
+org.jetbrains.compose.ui:ui-backhandler-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-desktop:1.8.1
+org.jetbrains.compose.ui:ui-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-geometry:1.8.1
+org.jetbrains.compose.ui:ui-geometry:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-geometry-desktop:1.8.1
+org.jetbrains.compose.ui:ui-geometry-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-graphics:1.8.1
+org.jetbrains.compose.ui:ui-graphics:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-graphics-desktop:1.8.1
+org.jetbrains.compose.ui:ui-graphics-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-text:1.8.1
+org.jetbrains.compose.ui:ui-text:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-text-desktop:1.8.1
+org.jetbrains.compose.ui:ui-text-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-tooling-preview:1.8.1
+org.jetbrains.compose.ui:ui-tooling-preview:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.8.1
+org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-unit:1.8.1
+org.jetbrains.compose.ui:ui-unit:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-unit-desktop:1.8.1
+org.jetbrains.compose.ui:ui-unit-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-util:1.8.1
+org.jetbrains.compose.ui:ui-util:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.compose.ui:ui-util-desktop:1.8.1
+org.jetbrains.compose.ui:ui-util-desktop:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlin:kotlin-stdlib:2.2.20
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.10
+org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.21
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.10
+org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.21
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:atomicfu:0.23.2
  - SPDX identifier 'Apache-2.0' allowed
@@ -154,9 +178,13 @@ org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
 org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.skiko:skiko:0.9.4.2
+org.jetbrains.runtime:jbr-api:1.5.0
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.skiko:skiko-awt:0.9.4.2
+org.jetbrains.skiko:skiko:0.9.22.2
  - SPDX identifier 'Apache-2.0' allowed
-org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.9.4.2
+org.jetbrains.skiko:skiko-awt:0.9.22.2
+ - SPDX identifier 'Apache-2.0' allowed
+org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.9.22.2
+ - SPDX identifier 'Apache-2.0' allowed
+org.jspecify:jspecify:1.0.0
  - SPDX identifier 'Apache-2.0' allowed
