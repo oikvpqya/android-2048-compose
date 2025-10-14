@@ -5,21 +5,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.StateFlow
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
 interface Presenter<EVENT, STATE> : EventBus<EVENT> {
 
     val uiStateFlow: StateFlow<STATE>
     fun produceUiState(uiState: STATE)
-    fun handleEvent(event: EVENT, coroutineContext: CoroutineContext = EmptyCoroutineContext)
+    fun handleEvent(event: EVENT)
 }
 
 @Composable
 fun <EVENT, STATE> Presenter<EVENT, STATE>.collectAsUiState(): State<STATE> {
     LaunchedEffect(this) {
         eventFlow.collect { event ->
-            handleEvent(event, coroutineContext)
+            handleEvent(event)
         }
     }
     return uiStateFlow.collectAsState()
@@ -27,6 +25,7 @@ fun <EVENT, STATE> Presenter<EVENT, STATE>.collectAsUiState(): State<STATE> {
 
 fun <EVENT, STATE> buildPresenter(
     initialUiState: STATE,
+    eventBus: EventBus<EVENT> = buildEventBus(),
 ): Presenter<EVENT, STATE> {
-    return PresenterImpl(EventBusImpl(), initialUiState)
+    return PresenterImpl(eventBus, initialUiState)
 }
