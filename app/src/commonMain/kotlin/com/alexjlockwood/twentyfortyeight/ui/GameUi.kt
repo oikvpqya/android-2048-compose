@@ -14,7 +14,6 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -133,14 +132,6 @@ fun GameUi(
                 shouldShowAboutDialog = false
             },
         )
-    }
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            GameUiState.Loading, is GameUiState.Success -> Unit
-            GameUiState.Nothing -> {
-                produceEvent(GameUiEvent.Load)
-            }
-        }
     }
 }
 

@@ -1,15 +1,23 @@
 package com.alexjlockwood.twentyfortyeight.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.checkIsGameOver
+import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
+import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
 import com.alexjlockwood.twentyfortyeight.runtime.buildPresenter
+import com.alexjlockwood.twentyfortyeight.runtime.rememberEventBus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -49,15 +57,22 @@ sealed interface GameUiState {
 @Composable
 fun rememberGamePresenter(
     gameState: GameState,
+    eventBus: EventBus<GameUiEvent> = rememberEventBus(),
 ): Presenter<GameUiEvent, GameUiState> {
+    val coroutineScope = rememberCoroutineScope()
     return remember(
         gameState,
-    ) { GamePresenter(gameState) }
+    ) { GamePresenter(gameState, coroutineScope.coroutineContext, eventBus) }
 }
 
 class GamePresenter(
     private val gameState: GameState,
-) : Presenter<GameUiEvent, GameUiState> by buildPresenter(GameUiState.Nothing) {
+    coroutineContext: CoroutineContext = Dispatchers.Default,
+    eventBus: EventBus<GameUiEvent> = buildEventBus(),
+) : Presenter<GameUiEvent, GameUiState> by buildPresenter(GameUiState.Nothing, eventBus), RememberObserver {
+
+    private var job: Job? = null
+    private val coroutineScope: CoroutineScope = CoroutineScope(coroutineContext)
 
     private suspend fun load() {
         gameState.load(true)?.let { data ->
@@ -72,10 +87,10 @@ class GamePresenter(
         produceUiState(GameUiState.Success(gameState.startNewGame(), false))
     }
 
-    override fun handleEvent(event: GameUiEvent, coroutineContext: CoroutineContext) {
+    override fun handleEvent(event: GameUiEvent) {
         when (event) {
             GameUiEvent.Load -> {
-                CoroutineScope(coroutineContext).launch {
+                coroutineScope.launch {
                     load()
                 }
             }
@@ -94,4 +109,24 @@ class GamePresenter(
             }
         }
     }
+
+    private fun startJob(): Job {
+        return coroutineScope.launch {
+            load()
+        }
+    }
+
+    private fun stop() {
+        job?.cancel()
+        coroutineScope.cancel()
+        job = null
+    }
+
+    override fun onRemembered() {
+        job = startJob()
+    }
+
+    override fun onForgotten() = stop()
+
+    override fun onAbandoned() = stop()
 }
