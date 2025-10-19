@@ -9,7 +9,7 @@ import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
-import com.alexjlockwood.twentyfortyeight.runtime.collectAsUiState
+import com.alexjlockwood.twentyfortyeight.runtime.collectAsState
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
 import com.alexjlockwood.twentyfortyeight.ui.GameUiState
@@ -30,7 +30,7 @@ class PresenterTest {
     fun produceEvent() = runTest {
         val presenter = createPresenter(createState())
         moleculeFlow(RecompositionMode.Immediate) {
-            presenter.collectAsUiState().value
+            presenter.collectAsState().value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.produceEvent(GameUiEvent.Load)
@@ -45,7 +45,7 @@ class PresenterTest {
         val state = createState()
         val eventBus = buildEventBus<GameUiEvent>()
         moleculeFlow(RecompositionMode.Immediate) {
-            rememberGamePresenter(state, eventBus).collectAsUiState().value
+            rememberGamePresenter(state, eventBus).collectAsState().value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             assertIs<GameUiState.Loading>(awaitItem())
@@ -64,7 +64,7 @@ class PresenterTest {
             bestScore = 32,
         )
         val presenter = createPresenter(createState(store))
-        presenter.uiStateFlow.test {
+        presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
@@ -85,7 +85,7 @@ class PresenterTest {
             bestScore = 32,
         )
         val presenter = createPresenter(createState(store))
-        presenter.uiStateFlow.test {
+        presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
@@ -109,7 +109,7 @@ class PresenterTest {
             bestScore = 32,
         )
         val presenter = createPresenter(createState(store))
-        presenter.uiStateFlow.test {
+        presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
@@ -132,7 +132,7 @@ class PresenterTest {
         )
         val state = createState(store, 1)
         val presenter = createPresenter(state)
-        presenter.uiStateFlow.test {
+        presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
@@ -182,7 +182,7 @@ class PresenterTest {
             bestScore = 32,
         )
         val presenter = createPresenter(createState(store))
-        presenter.uiStateFlow.test {
+        presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
@@ -217,16 +217,15 @@ private fun createRepository(
     }
 }
 
-private fun TestScope.createState(
+private fun createState(
     store: UserDataStore = UserDataStore(),
     maxStackSize: Int = 100,
 ): GameState = GameState(
     gameRepository = createRepository(store),
-    coroutineContext = coroutineContext,
     maxStackSize = maxStackSize,
 )
 
 private fun TestScope.createPresenter(
     state: GameState,
     eventBus: EventBus<GameUiEvent> = buildEventBus(),
-): Presenter<GameUiEvent, GameUiState> = GamePresenter(state, coroutineContext, eventBus)
+): Presenter<GameUiEvent, GameUiState> = GamePresenter(state, this, eventBus)

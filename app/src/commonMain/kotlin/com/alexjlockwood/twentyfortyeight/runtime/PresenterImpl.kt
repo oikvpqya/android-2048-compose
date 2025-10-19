@@ -9,11 +9,11 @@ class PresenterImpl<EVENT, STATE>(
 ) : Presenter<EVENT, STATE>, EventBus<EVENT> by base {
 
     private val mutableUiStateFlow = MutableStateFlow(initialUiState)
-    override val uiStateFlow = mutableUiStateFlow.asStateFlow()
+    override val stateFlow = mutableUiStateFlow.asStateFlow()
 
     override fun produceUiState(uiState: STATE) {
         mutableUiStateFlow.value = uiState
     }
 
-    override fun handleEvent(event: EVENT) {}
+    override suspend fun handleEvent(event: EVENT) {}
 }

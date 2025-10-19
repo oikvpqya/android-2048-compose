@@ -8,19 +8,19 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface Presenter<EVENT, STATE> : EventBus<EVENT> {
 
-    val uiStateFlow: StateFlow<STATE>
+    val stateFlow: StateFlow<STATE>
     fun produceUiState(uiState: STATE)
-    fun handleEvent(event: EVENT)
+    suspend fun handleEvent(event: EVENT)
 }
 
 @Composable
-fun <EVENT, STATE> Presenter<EVENT, STATE>.collectAsUiState(): State<STATE> {
+fun <EVENT, STATE> Presenter<EVENT, STATE>.collectAsState(): State<STATE> {
     LaunchedEffect(this) {
         eventFlow.collect { event ->
             handleEvent(event)
         }
     }
-    return uiStateFlow.collectAsState()
+    return stateFlow.collectAsState()
 }
 
 fun <EVENT, STATE> buildPresenter(
