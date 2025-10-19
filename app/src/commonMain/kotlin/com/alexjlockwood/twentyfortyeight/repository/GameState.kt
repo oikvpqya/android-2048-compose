@@ -5,11 +5,6 @@ import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.Tile
 import com.alexjlockwood.twentyfortyeight.domain.UserData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -22,7 +17,6 @@ private const val MAX_LIST_SIZE = 100
  */
 class GameState(
     private val gameRepository: GameRepository,
-    private val coroutineContext: CoroutineContext = Dispatchers.Default,
     maxStackSize: Int = MAX_LIST_SIZE,
 ) {
 
@@ -31,15 +25,13 @@ class GameState(
     val stack: List<UserData>
         get() = mutableStack
 
-    fun save(data: UserData) {
+    suspend fun save(data: UserData) {
         if (!checkIsGameOver(data.movements)) {
-            CoroutineScope(coroutineContext).launch {
-                gameRepository.update(data)
-            }
+            gameRepository.update(data)
         }
     }
 
-    fun startNewGame(): UserData {
+    suspend fun startNewGame(): UserData {
         val updatedTileMovements = buildList<GridTileMovement> {
             repeat(NUM_INITIAL_TILES) { add(createRandomAddedTile(map { it.to })) }
         }
@@ -50,7 +42,7 @@ class GameState(
         return updatedData
     }
 
-    fun move(
+    suspend fun move(
         direction: Direction,
     ): UserData? {
         val updatedData = moveTiles(data, direction) ?: return null
@@ -61,7 +53,7 @@ class GameState(
         return updatedData
     }
 
-    fun undo(): UserData? {
+    suspend fun undo(): UserData? {
         if (mutableStack.isEmpty()) return null
         // Pop and restore game from stack.
         val updatedData = mutableStack.removeAt(mutableStack.lastIndex)
@@ -74,9 +66,7 @@ class GameState(
         return if (useCache) {
             if (data.movements.isNotEmpty()) data else null
         } else {
-            val userData = withContext(coroutineContext) {
-                gameRepository.fetch()
-            }
+            val userData = gameRepository.fetch()
             if (userData.movements.isNotEmpty()) {
                 // Restore a previously saved game.
                 mutableStack.clear()

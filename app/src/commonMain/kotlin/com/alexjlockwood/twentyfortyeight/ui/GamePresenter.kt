@@ -17,9 +17,7 @@ import com.alexjlockwood.twentyfortyeight.runtime.rememberEventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
 sealed interface GameUiEvent {
 
@@ -62,17 +60,16 @@ fun rememberGamePresenter(
     val coroutineScope = rememberCoroutineScope()
     return remember(
         gameState,
-    ) { GamePresenter(gameState, coroutineScope.coroutineContext, eventBus) }
+    ) { GamePresenter(gameState, coroutineScope, eventBus) }
 }
 
 class GamePresenter(
     private val gameState: GameState,
-    coroutineContext: CoroutineContext = Dispatchers.Default,
+    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     eventBus: EventBus<GameUiEvent> = buildEventBus(),
 ) : Presenter<GameUiEvent, GameUiState> by buildPresenter(GameUiState.Nothing, eventBus), RememberObserver {
 
     private var job: Job? = null
-    private val coroutineScope: CoroutineScope = CoroutineScope(coroutineContext)
 
     private suspend fun load() {
         gameState.load(true)?.let { data ->
@@ -87,12 +84,10 @@ class GamePresenter(
         produceUiState(GameUiState.Success(gameState.startNewGame(), false))
     }
 
-    override fun handleEvent(event: GameUiEvent) {
+    override suspend fun handleEvent(event: GameUiEvent) {
         when (event) {
             GameUiEvent.Load -> {
-                coroutineScope.launch {
-                    load()
-                }
+                load()
             }
             is GameUiEvent.Move -> {
                 gameState.move(event.direction)?.let { data ->
@@ -118,7 +113,6 @@ class GamePresenter(
 
     private fun stop() {
         job?.cancel()
-        coroutineScope.cancel()
         job = null
     }
 
@@ -126,7 +120,11 @@ class GamePresenter(
         job = startJob()
     }
 
-    override fun onForgotten() = stop()
+    override fun onForgotten() {
+        stop()
+    }
 
-    override fun onAbandoned() = stop()
+    override fun onAbandoned() {
+        stop()
+    }
 }
