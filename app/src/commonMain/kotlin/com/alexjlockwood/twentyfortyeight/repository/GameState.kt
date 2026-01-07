@@ -8,8 +8,6 @@ import com.alexjlockwood.twentyfortyeight.domain.UserData
 import kotlin.math.max
 import kotlin.random.Random
 
-const val GRID_SIZE = 4
-private const val NUM_INITIAL_TILES = 2
 private const val MAX_LIST_SIZE = 100
 
 /**
@@ -26,16 +24,13 @@ class GameState(
         get() = mutableStack
 
     suspend fun save(data: UserData) {
-        if (!checkIsGameOver(data.movements)) {
+        if (!GameStrategy.DEFAULT.checkIsGameOver(data.movements)) {
             gameRepository.update(data)
         }
     }
 
     suspend fun startNewGame(): UserData {
-        val updatedTileMovements = buildList<GridTileMovement> {
-            repeat(NUM_INITIAL_TILES) { add(createRandomAddedTile(map { it.to })) }
-        }
-        val updatedData = UserData(updatedTileMovements, 0, data.bestScore)
+        val updatedData = GameStrategy.DEFAULT.startNewGame(data.bestScore)
         mutableStack.clear()
         data = updatedData
         save(updatedData)
@@ -45,7 +40,7 @@ class GameState(
     suspend fun move(
         direction: Direction,
     ): UserData? {
-        val updatedData = moveTiles(data, direction) ?: return null
+        val updatedData = GameStrategy.DEFAULT.move(direction, data.movements, data.currentScore, data.bestScore) ?: return null
         // Push game data to stack.
         mutableStack.add(data)
         data = updatedData
@@ -79,53 +74,81 @@ class GameState(
     }
 }
 
-private fun moveTiles(
-    data: UserData,
-    direction: Direction,
-): UserData? {
-    val movedTileMovements = makeMove(data.movements, direction)
+/**
+ * Strategy that contains the logic that powers the 2048 game.
+ */
+class GameStrategy(
+    val gridSize: Int,
+    val initialTilesCount: Int = 2,
+) {
 
-    if (!hasGridChanged(movedTileMovements)) {
-        // No tiles were moved.
-        return null
+    fun startNewGame(bestScore: Int): UserData {
+        val initialMovements = buildList {
+            repeat(initialTilesCount) {
+                val cells = map { movement: GridTileMovement -> movement.to }
+                add(createRandomAddedMovement(cells, gridSize))
+            }
+        }
+        return UserData(initialMovements, 0, bestScore)
     }
 
-    // Increment the score.
-    val scoreIncrement = movedTileMovements.filter { it.from == null }.sumOf { it.tile.num }
-    val score = data.currentScore + scoreIncrement
+    fun move(direction: Direction, movements: List<GridTileMovement>, currentScore: Int, bestScore: Int): UserData? {
+        val movedMovements = makeMove(movements, direction, gridSize)
 
-    // Attempt to add a new tile to the grid.
-    val addedTileMovements = movedTileMovements.toMutableList().apply {
-        add(createRandomAddedTile(movedTileMovements.map { it.to }))
-    }.sortedWith { a, _ -> if (a.from == null) 1 else -1 }
+        if (!hasGridChanged(movedMovements)) {
+            // No tiles were moved.
+            return null
+        }
 
-    return UserData(addedTileMovements, score, max(data.bestScore, score))
+        // Increment the score.
+        val scoreIncrement = movedMovements.filter { it.from == null }.sumOf { it.tile.num }
+        val updatedScore = currentScore + scoreIncrement
+
+        // Attempt to add a new tile to the grid.
+        val randomAddedMovements = movedMovements
+            .toMutableList()
+            .apply {
+                add(createRandomAddedMovement(map { it.to }, gridSize))
+                sortWith { a, _ -> if (a.from == null) 1 else -1 }
+            }
+        return UserData(randomAddedMovements, updatedScore, max(bestScore, updatedScore))
+    }
+
+    fun checkIsGameOver(movements: List<GridTileMovement>): Boolean {
+        return checkIsGameOver(movements, gridSize)
+    }
+
+    companion object {
+        val DEFAULT: GameStrategy = GameStrategy(4)
+    }
 }
 
-private fun createRandomAddedTile(cells: List<Cell>): GridTileMovement {
-    val emptyCells = buildList<Cell> {
-        repeat(GRID_SIZE) { rowIndex ->
-            repeat(GRID_SIZE) { colIndex ->
+private fun createRandomAddedMovement(cells: List<Cell>, gridSize: Int): GridTileMovement {
+    val emptyCells = buildList {
+        repeat(gridSize) { rowIndex ->
+            repeat(gridSize) { colIndex ->
                 val cell = Cell(rowIndex, colIndex)
-                if (!cells.contains(cell)) add(cell)
+                if (!cells.contains(cell)) {
+                    add(cell)
+                }
             }
         }
     }
     return GridTileMovement.add(Tile(if (Random.nextFloat() < 0.9f) 2 else 4), emptyCells[emptyCells.indices.random()])
 }
 
-private fun makeMove(movements: List<GridTileMovement>, direction: Direction): List<GridTileMovement> {
+private fun makeMove(movements: List<GridTileMovement>, direction: Direction, gridSize: Int): List<GridTileMovement> {
     return buildList {
         val tiles = movements.groupBy { it.to }.mapValues { (_, value) -> value.maxBy { it.tile.id }.tile }
-        repeat(GRID_SIZE) { currentRowIndex ->
+        repeat(gridSize) { currentRowIndex ->
             // Rotate tiles so that we can process it as if the user has swiped their
             // finger from right to left
-            val mutableRowTiles = MutableList(GRID_SIZE) { tiles[getRotatedCellAt(direction, currentRowIndex, it)] }
+            val mutableRowTiles = MutableList(gridSize) { tiles[getRotatedCellAt(direction, gridSize, currentRowIndex, it)] }
             var lastSeenTileIndex: Int? = null
             var lastSeenEmptyIndex: Int? = null
-            repeat(GRID_SIZE) { currentColIndex ->
+            repeat(gridSize) { currentColIndex ->
                 val currentTile = mutableRowTiles[currentColIndex]
-                val currentCell = getRotatedCellAt(direction, currentRowIndex, currentColIndex)
+                val currentCell = getRotatedCellAt(direction, gridSize, currentRowIndex, currentColIndex)
                 when {
                     currentTile == null -> {
                         // We are looking at an empty cell in the grid.
@@ -145,7 +168,7 @@ private fun makeMove(movements: List<GridTileMovement>, direction: Direction): L
                             lastSeenTileIndex = currentColIndex
                         } else {
                             // Shift the tile to the location of the furthest empty cell in the list.
-                            val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenEmptyIndex)
+                            val targetCell = getRotatedCellAt(direction, gridSize, currentRowIndex, lastSeenEmptyIndex)
                             add(GridTileMovement.shift(currentTile, currentCell, targetCell))
 
                             mutableRowTiles[lastSeenEmptyIndex] = currentTile
@@ -158,7 +181,7 @@ private fun makeMove(movements: List<GridTileMovement>, direction: Direction): L
                     // There is a previous tile in the list that we need to process.
                     mutableRowTiles[lastSeenTileIndex]!!.num == currentTile.num -> {
                         // Shift the tile to the location where it will be merged.
-                        val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenTileIndex)
+                        val targetCell = getRotatedCellAt(direction, gridSize, currentRowIndex, lastSeenTileIndex)
                         add(GridTileMovement.shift(currentTile, currentCell, targetCell))
 
                         // Merge the current tile with the previous tile.
@@ -181,7 +204,7 @@ private fun makeMove(movements: List<GridTileMovement>, direction: Direction): L
 
                     else -> {
                         // Shift the current tile towards the previous tile.
-                        val targetCell = getRotatedCellAt(direction, currentRowIndex, lastSeenEmptyIndex)
+                        val targetCell = getRotatedCellAt(direction, gridSize, currentRowIndex, lastSeenEmptyIndex)
                         add(GridTileMovement.shift(currentTile, currentCell, targetCell))
 
                         mutableRowTiles[lastSeenEmptyIndex] = currentTile
@@ -195,18 +218,18 @@ private fun makeMove(movements: List<GridTileMovement>, direction: Direction): L
     }
 }
 
-private fun getRotatedCellAt(direction: Direction, row: Int, col: Int): Cell {
+private fun getRotatedCellAt(direction: Direction, gridSize: Int, row: Int, col: Int): Cell {
     return when (direction) {
         Direction.WEST -> Cell(row, col)
-        Direction.SOUTH -> Cell(GRID_SIZE - 1 - col, row)
-        Direction.EAST -> Cell(GRID_SIZE - 1 - row, GRID_SIZE - 1 - col)
-        Direction.NORTH -> Cell(col, GRID_SIZE - 1 - row)
+        Direction.SOUTH -> Cell(gridSize - 1 - col, row)
+        Direction.EAST -> Cell(gridSize - 1 - row, gridSize - 1 - col)
+        Direction.NORTH -> Cell(col, gridSize - 1 - row)
     }
 }
 
-private fun checkIsGameOver(movements: List<GridTileMovement>): Boolean {
+private fun checkIsGameOver(movements: List<GridTileMovement>, gridSize: Int): Boolean {
     // The game is over if no tiles can be moved in any of the 4 directions.
-    return Direction.entries.none { hasGridChanged(makeMove(movements, it)) }
+    return Direction.entries.none { hasGridChanged(makeMove(movements, it, gridSize)) }
 }
 
 private fun hasGridChanged(movements: List<GridTileMovement>): Boolean {
@@ -232,5 +255,5 @@ private class MutableLimitedList<T>(
 }
 
 fun UserData.checkIsGameOver(): Boolean {
-    return checkIsGameOver(movements)
+    return GameStrategy.DEFAULT.checkIsGameOver(movements)
 }
