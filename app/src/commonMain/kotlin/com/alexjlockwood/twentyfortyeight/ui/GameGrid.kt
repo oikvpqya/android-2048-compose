@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
-import com.alexjlockwood.twentyfortyeight.repository.GRID_SIZE
 
 /**
  * Renders a grid of tiles that animates when game moves are made.
@@ -29,21 +28,22 @@ import com.alexjlockwood.twentyfortyeight.repository.GRID_SIZE
 @Composable
 fun GameGrid(
     gridTileMovements: List<GridTileMovement>,
+    gridSize: Int,
     modifier: Modifier = Modifier,
-    gridSize: Dp = 320.dp,
+    containerSize: Dp = 320.dp,
     tileMargin: Dp = 4.dp,
     tileRadius: Dp = 4.dp,
 ) {
-    val tileSize = ((gridSize - tileMargin * (GRID_SIZE - 1)) / GRID_SIZE).coerceAtLeast(0.dp)
+    val tileSize = ((containerSize - tileMargin * (gridSize - 1)) / gridSize).coerceAtLeast(0.dp)
     val tileOffset = with(LocalDensity.current) { (tileSize + tileMargin).toPx() }
     val emptyTileColor = getEmptyTileColor(isSystemInDarkTheme())
     Box(
         modifier = modifier
-            .size(gridSize)
+            .size(containerSize)
             .drawBehind {
                 // Draw the background empty tiles.
-                for (row in 0 until GRID_SIZE) {
-                    for (col in 0 until GRID_SIZE) {
+                for (row in 0 until gridSize) {
+                    for (col in 0 until gridSize) {
                         drawRoundRect(
                             color = emptyTileColor,
                             topLeft = Offset(col * tileOffset, row * tileOffset),

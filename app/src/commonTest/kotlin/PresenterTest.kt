@@ -6,6 +6,7 @@ import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
+import com.alexjlockwood.twentyfortyeight.repository.MutableLimitedList
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
@@ -28,7 +29,7 @@ class PresenterTest {
 
     @Test
     fun produceEvent() = runTest {
-        val presenter = createPresenter(createState())
+        val presenter = createPresenter(createRepository())
         moleculeFlow(RecompositionMode.Immediate) {
             presenter.collectAsState().value
         }.test {
@@ -63,7 +64,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createRepository(store))
         presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -71,6 +72,7 @@ class PresenterTest {
 
             val item = awaitItem()
             assertIs<GameUiState.Success>(item)
+            assertEquals(store.grid.size, item.gridSize)
             assertEquals(store.currentScore, item.currentScore)
             assertEquals(store.bestScore, item.bestScore)
             ensureAllEventsConsumed()
@@ -84,7 +86,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createRepository(store))
         presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -108,7 +110,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createRepository(store))
         presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -130,34 +132,42 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val state = createState(store, 1)
-        val presenter = createPresenter(state)
+        val mutableStack = MutableLimitedList<UserData>(mutableListOf(), 2)
+        val presenter = createPresenter(createRepository(store), mutableStack = mutableStack)
         presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
             assertIs<GameUiState.Loading>(awaitItem())
             val item1 = awaitItem()
             assertIs<GameUiState.Success>(item1)
-            assertFalse(item1.canUndo)
-            assertTrue(state.stack.isEmpty())
+            assertFalse(item1.isUndoable)
+            assertEquals(mutableStack.size, 1)
 
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             val item2 = awaitItem()
             assertIs<GameUiState.Success>(item2)
-            assertTrue(item2.canUndo)
-            assertTrue(state.stack.size == 1)
-
+            assertTrue(item2.isUndoable)
+            assertEquals(mutableStack.size, 2)
             presenter.handleEvent(GameUiEvent.Undo)
             val item3 = awaitItem()
             assertIs<GameUiState.Success>(item3)
             assertTrue(item3.gridTileMovements.all { it.tile.num == 16 })
-            assertTrue(state.stack.isEmpty())
+            assertFalse(item3.isUndoable)
+            assertEquals(mutableStack.size, 1)
 
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
             awaitItem()
+            assertEquals(mutableStack.size, 2)
             presenter.handleEvent(GameUiEvent.Move(Direction.WEST))
-            awaitItem()
-            assertTrue(state.stack.size == 1)
+            val item4 = awaitItem()
+            assertIs<GameUiState.Success>(item4)
+            assertTrue(item4.isUndoable)
+            assertEquals(mutableStack.size, 2)
+            presenter.handleEvent(GameUiEvent.Undo)
+            val item5 = awaitItem()
+            assertIs<GameUiState.Success>(item5)
+            assertFalse(item5.isUndoable)
+            assertEquals(mutableStack.size, 1)
             ensureAllEventsConsumed()
         }
     }
@@ -181,7 +191,7 @@ class PresenterTest {
             currentScore = 16,
             bestScore = 32,
         )
-        val presenter = createPresenter(createState(store))
+        val presenter = createPresenter(createRepository(store))
         presenter.stateFlow.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             presenter.handleEvent(GameUiEvent.Load)
@@ -189,13 +199,13 @@ class PresenterTest {
             val item1 = awaitItem()
             assertIs<GameUiState.Success>(item1)
             assertFalse(item1.isGameOver)
-            assertFalse(item1.canUndo)
+            assertFalse(item1.isUndoable)
 
             presenter.handleEvent(GameUiEvent.Move(Direction.NORTH))
             val item2 = awaitItem()
             assertIs<GameUiState.Success>(item2)
             assertTrue(item2.isGameOver)
-            assertTrue(item2.canUndo)
+            assertTrue(item2.isUndoable)
 
             presenter.handleEvent(GameUiEvent.Undo)
             assertIs<GameUiState.Success>(awaitItem())
@@ -219,13 +229,10 @@ private fun createRepository(
 
 private fun createState(
     store: UserDataStore = UserDataStore(),
-    maxStackSize: Int = 100,
-): GameState = GameState(
-    gameRepository = createRepository(store),
-    maxStackSize = maxStackSize,
-)
+): GameState = GameState(createRepository(store))
 
 private fun TestScope.createPresenter(
-    state: GameState,
+    repository: GameRepository,
     eventBus: EventBus<GameUiEvent> = buildEventBus(),
-): Presenter<GameUiEvent, GameUiState> = GamePresenter(state, this, eventBus)
+    mutableStack: MutableList<UserData> = mutableListOf(),
+): Presenter<GameUiEvent, GameUiState> = GamePresenter(repository, mutableStack, this, eventBus)
