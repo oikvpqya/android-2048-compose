@@ -51,7 +51,6 @@ class GameStrategy(
             .toMutableList()
             .apply {
                 add(createRandomAddedMovement(map { it.to }, gridSize))
-                sortWith { a, _ -> if (a.from == null) 1 else -1 }
             }
         return UserData(randomAddedMovements, updatedScore, max(bestScore, updatedScore))
     }
