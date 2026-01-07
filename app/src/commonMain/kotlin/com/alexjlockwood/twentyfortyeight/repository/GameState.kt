@@ -8,71 +8,13 @@ import com.alexjlockwood.twentyfortyeight.domain.UserData
 import kotlin.math.max
 import kotlin.random.Random
 
-private const val MAX_LIST_SIZE = 100
-
 /**
- * Statement that contains the logic that powers the 2048 game.
+ * Statement of the 2048 game.
  */
 class GameState(
-    private val gameRepository: GameRepository,
-    maxStackSize: Int = MAX_LIST_SIZE,
-) {
-
-    var data = UserData()
-    private val mutableStack = MutableLimitedList<UserData>(mutableListOf(), maxStackSize)
-    val stack: List<UserData>
-        get() = mutableStack
-
-    suspend fun save(data: UserData) {
-        if (!GameStrategy.DEFAULT.checkIsGameOver(data.movements)) {
-            gameRepository.update(data)
-        }
-    }
-
-    suspend fun startNewGame(): UserData {
-        val updatedData = GameStrategy.DEFAULT.startNewGame(data.bestScore)
-        mutableStack.clear()
-        data = updatedData
-        save(updatedData)
-        return updatedData
-    }
-
-    suspend fun move(
-        direction: Direction,
-    ): UserData? {
-        val updatedData = GameStrategy.DEFAULT.move(direction, data.movements, data.currentScore, data.bestScore) ?: return null
-        // Push game data to stack.
-        mutableStack.add(data)
-        data = updatedData
-        save(updatedData)
-        return updatedData
-    }
-
-    suspend fun undo(): UserData? {
-        if (mutableStack.isEmpty()) return null
-        // Pop and restore game from stack.
-        val updatedData = mutableStack.removeAt(mutableStack.lastIndex)
-        data = updatedData
-        save(updatedData)
-        return updatedData
-    }
-
-    suspend fun load(useCache: Boolean): UserData? {
-        return if (useCache) {
-            if (data.movements.isNotEmpty()) data else null
-        } else {
-            val userData = gameRepository.fetch()
-            if (userData.movements.isNotEmpty()) {
-                // Restore a previously saved game.
-                mutableStack.clear()
-                data = userData
-                userData
-            } else {
-                null
-            }
-        }
-    }
-}
+    val gameRepository: GameRepository,
+    val mutableStack: MutableList<UserData> = MutableLimitedList(mutableListOf(), 100),
+)
 
 /**
  * Strategy that contains the logic that powers the 2048 game.
@@ -237,9 +179,9 @@ private fun hasGridChanged(movements: List<GridTileMovement>): Boolean {
     return movements.any { (_, from, to) -> from == null || from != to }
 }
 
-private class MutableLimitedList<T>(
+class MutableLimitedList<T>(
     private val base: MutableList<T>,
-    private val maxSize: Int = MAX_LIST_SIZE,
+    private val maxSize: Int,
 ) : MutableList<T> by base {
 
     override fun add(element: T): Boolean {
@@ -252,8 +194,4 @@ private class MutableLimitedList<T>(
             false
         }
     }
-}
-
-fun UserData.checkIsGameOver(): Boolean {
-    return GameStrategy.DEFAULT.checkIsGameOver(movements)
 }

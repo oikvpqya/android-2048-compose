@@ -7,8 +7,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
+import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
-import com.alexjlockwood.twentyfortyeight.repository.checkIsGameOver
+import com.alexjlockwood.twentyfortyeight.repository.GameStrategy
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
@@ -18,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+
+private val GRID_SIZE = GameStrategy.DEFAULT.gridSize
 
 sealed interface GameUiEvent {
 
@@ -32,22 +35,24 @@ sealed interface GameUiState {
     data object Loading : GameUiState
     data object Nothing : GameUiState
     data class Success(
+        val gridSize: Int,
         val gridTileMovements: List<GridTileMovement>,
         val currentScore: Int,
         val bestScore: Int,
         val isGameOver: Boolean,
-        val canUndo: Boolean,
+        val isUndoable: Boolean,
     ) : GameUiState {
 
         constructor(
             data: UserData,
-            canUndo: Boolean,
+            isUndoable: Boolean,
         ) : this(
+            gridSize = GRID_SIZE,
             gridTileMovements = data.movements,
             currentScore = data.currentScore,
             bestScore = data.bestScore,
-            isGameOver = data.checkIsGameOver(),
-            canUndo = canUndo,
+            isGameOver = GameStrategy(GRID_SIZE).checkIsGameOver(data.movements),
+            isUndoable = isUndoable,
         )
     }
 }
@@ -60,54 +65,83 @@ fun rememberGamePresenter(
     val coroutineScope = rememberCoroutineScope()
     return remember(
         gameState,
-    ) { GamePresenter(gameState, coroutineScope, eventBus) }
+    ) { GamePresenter(gameState.gameRepository, gameState.mutableStack, coroutineScope, eventBus) }
 }
 
 class GamePresenter(
-    private val gameState: GameState,
+    private val gameRepository: GameRepository,
+    private val mutableStack: MutableList<UserData>,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     eventBus: EventBus<GameUiEvent> = buildEventBus(),
 ) : Presenter<GameUiEvent, GameUiState> by buildPresenter(GameUiState.Nothing, eventBus), RememberObserver {
 
     private var job: Job? = null
 
-    private suspend fun load() {
-        gameState.load(true)?.let { data ->
-            produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
-            return
+    private suspend fun save(data: UserData) {
+        if (!GameStrategy(GRID_SIZE).checkIsGameOver(data.movements)) {
+            gameRepository.update(data)
         }
-        produceUiState(GameUiState.Loading)
-        gameState.load(false)?.let { data ->
-            produceUiState(GameUiState.Success(data, false))
-            return
-        }
-        produceUiState(GameUiState.Success(gameState.startNewGame(), false))
+    }
+
+    private suspend fun startNewGame(gridSize: Int, bestScore: Int): UserData {
+        val updatedData = GameStrategy(gridSize).startNewGame(bestScore)
+        mutableStack.clear()
+        mutableStack.add(updatedData)
+        save(updatedData)
+        return updatedData
+    }
+
+    private fun checkIsUndoable(): Boolean {
+        return mutableStack.size > 1
     }
 
     override suspend fun handleEvent(event: GameUiEvent) {
+        val currentData = mutableStack.lastOrNull()
         when (event) {
             GameUiEvent.Load -> {
-                load()
+                if (currentData != null && currentData.movements.isNotEmpty()) {
+                    produceUiState(GameUiState.Success(currentData, checkIsUndoable()))
+                } else {
+                    produceUiState(GameUiState.Loading)
+                    val store = gameRepository.fetch()
+                    if (store != UserData() && store.movements.isNotEmpty()) {
+                        // Restore a previously saved game.
+                        mutableStack.clear()
+                        mutableStack.add(store)
+                        produceUiState(GameUiState.Success(store, false))
+                    } else {
+                        produceUiState(GameUiState.Success(startNewGame(GRID_SIZE, 0), false))
+                    }
+                }
             }
             is GameUiEvent.Move -> {
-                gameState.move(event.direction)?.let { data ->
-                    produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
+                if (currentData != null) {
+                    val updatedData = with(currentData) {
+                        GameStrategy(GRID_SIZE).move(event.direction, movements, currentScore, bestScore)
+                    }
+                    if (updatedData != null) {
+                        // Push game data to stack.
+                        mutableStack.add(updatedData)
+                        save(updatedData)
+                        produceUiState(GameUiState.Success(updatedData, checkIsUndoable()))
+                    }
                 }
             }
             GameUiEvent.StartNewGame -> {
-                produceUiState(GameUiState.Success(gameState.startNewGame(), false))
+                val bestScore = currentData?.bestScore ?: 0
+                produceUiState(GameUiState.Success(startNewGame(GRID_SIZE, bestScore), false))
             }
             GameUiEvent.Undo -> {
-                gameState.undo()?.let { data ->
-                    produceUiState(GameUiState.Success(data, gameState.stack.isNotEmpty()))
+                if (checkIsUndoable()) {
+                    // Pop and restore game from stack.
+                    val updatedData = with(mutableStack) {
+                        removeAt(lastIndex)
+                        last()
+                    }
+                    save(updatedData)
+                    produceUiState(GameUiState.Success(updatedData, checkIsUndoable()))
                 }
             }
-        }
-    }
-
-    private fun startJob(): Job {
-        return coroutineScope.launch {
-            load()
         }
     }
 
@@ -117,7 +151,9 @@ class GamePresenter(
     }
 
     override fun onRemembered() {
-        job = startJob()
+        job = coroutineScope.launch {
+            handleEvent(GameUiEvent.Load)
+        }
     }
 
     override fun onForgotten() {

@@ -42,7 +42,7 @@ fun GameUi(
 ) {
     var shouldShowAboutDialog by rememberSaveable { mutableStateOf(false) }
     var shouldShowNewGameDialog by rememberSaveable { mutableStateOf(false) }
-    BackHandler(uiState is GameUiState.Success && uiState.canUndo) { produceEvent(GameUiEvent.Undo) }
+    BackHandler(uiState is GameUiState.Success && uiState.isUndoable) { produceEvent(GameUiEvent.Undo) }
     Column(
         modifier = modifier
             .safeDrawingPadding()
@@ -55,7 +55,7 @@ fun GameUi(
             actions = {
                 IconButton(
                     onClick = { produceEvent(GameUiEvent.Undo) },
-                    enabled = uiState is GameUiState.Success && uiState.canUndo,
+                    enabled = uiState is GameUiState.Success && uiState.isUndoable,
                 ) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                 }
@@ -96,7 +96,7 @@ fun GameUi(
                         }
                     )
                 },
-            gameGrid = { GameGrid(gridTileMovements = uiState.gridTileMovements, gridSize = it) },
+            gameGrid = { GameGrid(gridTileMovements = uiState.gridTileMovements, gridSize = uiState.gridSize, containerSize = it) },
             currentScoreText = { TextLabel(text = "${uiState.currentScore}", fontSize = 36.sp) },
             currentScoreLabel = { TextLabel(text = "Score", fontSize = 18.sp) },
             bestScoreText = { TextLabel(text = "${uiState.bestScore}", fontSize = 36.sp) },
