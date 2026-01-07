@@ -5,11 +5,11 @@ import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.alexjlockwood.twentyfortyeight.domain.Direction
+import com.alexjlockwood.twentyfortyeight.domain.GameStrategy
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
-import com.alexjlockwood.twentyfortyeight.repository.GameStrategy
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus

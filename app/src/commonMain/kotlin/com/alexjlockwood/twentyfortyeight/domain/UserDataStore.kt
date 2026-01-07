@@ -1,6 +1,5 @@
 package com.alexjlockwood.twentyfortyeight.domain
 
-import com.alexjlockwood.twentyfortyeight.repository.GameStrategy
 import kotlinx.serialization.Serializable
 
 @Serializable

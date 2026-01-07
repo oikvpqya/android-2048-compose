@@ -1,6 +1,6 @@
 import com.alexjlockwood.twentyfortyeight.domain.Direction
+import com.alexjlockwood.twentyfortyeight.domain.GameStrategy
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
-import com.alexjlockwood.twentyfortyeight.repository.GameStrategy
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
