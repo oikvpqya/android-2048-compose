@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -33,16 +33,17 @@ jobs:
           ./gradlew :app:desktopTest
           ./gradlew :app:testDebugTest
           ./gradlew :app:testReleaseTest
+          ./gradlew :app:jsBrowserTest
           ./gradlew :app:wasmJsBrowserTest
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload Release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-apk
           path: app/build/outputs/apk/release/app-release.apk

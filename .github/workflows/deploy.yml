@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up JDK
         uses: actions/setup-java@v5
@@ -28,16 +28,27 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Build WasmJs with Gradle
-        run: ./gradlew :app:wasmJsBrowserDistribution
+      - name: Build Web with Gradle
+        run: |
+          ./gradlew :app:jsBrowserDistribution
+          ./gradlew :app:wasmJsBrowserDistribution
+          ./gradlew :app:composeCompatibilityBrowserDistribution
 
       - name: Test with Gradle
-        run: ./gradlew :app:wasmJsBrowserTest
+        run: |
+          ./gradlew :app:jsBrowserTest
+          ./gradlew :app:wasmJsBrowserTest
+
+      - name: Organize Pages artifact
+        run: |
+          cp -r app/build/dist/composeWebCompatibility/productionExecutable dist
+          cp -r app/build/dist/js/productionExecutable dist/js
+          cp -r app/build/dist/wasmJs/productionExecutable dist/wasmJs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: app/build/dist/wasmJs/productionExecutable
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment

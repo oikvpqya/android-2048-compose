@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import org.w3c.dom.get
 import org.w3c.dom.set
 
-class DefaultGameRepository : GameRepository {
+class WebGameRepository : GameRepository {
 
     private val lock = Mutex()
 

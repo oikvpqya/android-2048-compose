@@ -1,8 +1,8 @@
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
-import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
+import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import net.harawata.appdirs.AppDirsFactory
 import kotlin.io.path.Path
@@ -21,7 +21,7 @@ fun main() {
         if (!userDataDir.exists()) {
             userDataDir.createDirectories()
         }
-        val gameRepository = DefaultGameRepository(
+        val gameRepository = JvmAndroidGameRepository(
             file = userDataDir.div(USER_DATA_FILE_NAME),
         )
         GameState(gameRepository = gameRepository)

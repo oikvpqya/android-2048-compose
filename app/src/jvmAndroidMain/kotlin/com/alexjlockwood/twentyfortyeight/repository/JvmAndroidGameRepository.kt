@@ -24,7 +24,7 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.moveTo
 import kotlin.io.path.outputStream
 
-class DefaultGameRepository(
+class JvmAndroidGameRepository(
     private val file: Path,
 ) : GameRepository {
 
