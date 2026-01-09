@@ -1,5 +1,6 @@
 import app.cash.licensee.LicenseeTask
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -18,23 +19,45 @@ plugins {
 }
 
 tasks.withType(KotlinJvmCompile).configureEach {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
 kotlin {
     androidTarget()
-    jvm("desktop")
 
-    wasmJs {
-        outputModuleName = "composeApp"
+    jvm("desktop") {
+        binaries {
+            executable {
+                mainClass.set("MainKt")
+            }
+        }
+    }
+
+    js {
+        outputModuleName.set("composeApp")
         browser {
             commonWebpackConfig {
                 outputFileName = "composeApp.js"
             }
         }
-        binaries.executable()
+        binaries {
+            executable()
+        }
+        useEsModules()
+    }
+
+    wasmJs {
+        outputModuleName.set("composeApp")
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+            }
+        }
+        binaries {
+            executable()
+        }
     }
 
     sourceSets {
@@ -74,8 +97,19 @@ kotlin {
             }
         }
 
-        wasmJsMain {
+        webMain {
             dependsOn(commonMain)
+            dependencies {
+                implementation libs.kotlinxBrowser
+            }
+        }
+
+        jsMain {
+            dependsOn(webMain)
+        }
+
+        wasmJsMain {
+            dependsOn(webMain)
         }
 
         commonTest {
@@ -131,55 +165,61 @@ android {
     }
 
     testOptions {
-        unitTests.returnDefaultValues = true // for app.cash.molecule
+        unitTests {
+            returnDefaultValues true // for app.cash.molecule
+        }
     }
 }
 
 compose {
     desktop {
         application {
-            mainClass = "MainKt"
-
+            mainClass "MainKt"
             nativeDistributions {
-                targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-                packageName = "com.alexjlockwood.twentyfortyeightcompose"
-                packageVersion = "1.0.0"
+                targetFormats TargetFormat.AppImage
+                packageName "com.alexjlockwood.twentyfortyeightcompose"
+                packageVersion "1.0.0"
             }
         }
     }
 
     experimental {
-        web.application {}
+        web {
+            application {}
+        }
     }
 
     resources {
         packageOfResClass "com.alexjlockwood.twentyfortyeight"
+    }
+}
 
-        kotlin.targets.configureEach { target ->
-            if (target.platformType == KotlinPlatformType.common) {
-                return
-            }
-            if (target.platformType == KotlinPlatformType.androidJvm) {
-                androidComponents {
-                    onVariants(selector().all()) { variant ->
-                        String suffix = "${target.name}${replaceFirstCharWithUpperCase(variant.name)}"
-                        customDirectory(suffix, licenseeResourcesDirectory(suffix, provider { variant.runtimeConfiguration }))
-                    }
-                }
-            } else {
-                String compilationName = KotlinCompilation.MAIN_COMPILATION_NAME
-                String suffix = "${target.name}${replaceFirstCharWithUpperCase(compilationName)}"
-                Provider<Configuration> configuration = target.compilations.named(compilationName).map { compilation ->
-                    String configurationName = compilation.runtimeDependencyConfigurationName
-                    if (configurationName != null) {
-                        configurations.named(configurationName).get()
-                    } else {
-                        configurations.named(compilation.compileDependencyConfigurationName).get()
-                    }
-                }
-                customDirectory(suffix, licenseeResourcesDirectory(suffix, configuration))
+kotlin.targets.configureEach { target ->
+    if (target.platformType == KotlinPlatformType.common) {
+        return
+    }
+    if (target.platformType == KotlinPlatformType.androidJvm) {
+        androidComponents {
+            onVariants(selector().all()) { variant ->
+                String suffix = "${target.name}${replaceFirstCharWithUpperCase(variant.name)}"
+                Configuration configuration = variant.runtimeConfiguration
+                Directory outputDir = layout.buildDirectory.get().dir(Paths.get("generated", "licensee", suffix).toString())
+                TaskProvider<Task> licenseeTask = licenseeResourcesGenerationTask(suffix, configuration, outputDir)
+                compose.resources.customDirectory(suffix, licenseeTask.map { outputDir })
             }
         }
+    } else {
+        String compilationName = KotlinCompilation.MAIN_COMPILATION_NAME
+        String suffix = "${target.name}${replaceFirstCharWithUpperCase(compilationName)}"
+        String configurationName = target.compilations.named(compilationName).get().runtimeDependencyConfigurationName
+        if (configurationName == null) {
+            logger.error("Cannot find ${target.name} runtime configuration.")
+            return
+        }
+        Configuration configuration = configurations.named(configurationName).get()
+        Directory outputDir = layout.buildDirectory.get().dir(Paths.get("generated", "licensee", suffix).toString())
+        TaskProvider<Task> licenseeTask = licenseeResourcesGenerationTask(suffix, configuration, outputDir)
+        compose.resources.customDirectory(suffix, licenseeTask.map { outputDir })
     }
 }
 
@@ -191,19 +231,24 @@ private static String replaceFirstCharWithUpperCase(String input) {
     return input.substring(0,1).toUpperCase() + input.substring(1)
 }
 
-private Provider<Directory> licenseeResourcesDirectory(String suffix, Provider<Configuration> configuration) {
-    return tasks.register("licenseeGenerateResources${replaceFirstCharWithUpperCase(suffix)}", LicenseeTask) {
-        configurationToCheck configuration.get()
-        outputDir.set(layout.projectDirectory.dir(Paths.get("reports", "licensee", suffix).toString()))
+private TaskProvider<LicenseeTask> licenseeResourcesGenerationTask(String suffix, Configuration configuration, Directory outputDir) {
+    return tasks.register("generateLicenseeResources${replaceFirstCharWithUpperCase(suffix)}", LicenseeTask) { licenseeTask ->
+        configurationToCheck configuration
         doLast {
-            Path from = Paths.get(layout.projectDirectory.toString(), "reports", "licensee", suffix, "artifacts.json")
-            Path to = Paths.get(layout.buildDirectory.get().toString(), "generated", "licensee", suffix, "files", "artifacts.json")
+            Path from = Paths.get(licenseeTask.jsonOutput.get().toString())
+            Path to = Paths.get(outputDir.toString(), "files", "artifacts.json")
             if (!Files.exists(to.parent)) {
                 Files.createDirectories(to.parent)
             }
             Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }
-    }.map {
-        layout.buildDirectory.get().dir(Paths.get("generated", "licensee", suffix).toString())
+        doLast {
+            Path from = Paths.get(licenseeTask.validationOutput.get().toString())
+            Path to = Paths.get(layout.projectDirectory.toString(), "reports", "licensee", suffix, "validation.txt")
+            if (!Files.exists(to.parent)) {
+                Files.createDirectories(to.parent)
+            }
+            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 }

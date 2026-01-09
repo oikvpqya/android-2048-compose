@@ -6,9 +6,10 @@ cashLicensee = "1.13.0"
 cashMolecule = "2.0.0"
 cashTurbine = "1.2.0"
 harawataAppdirs = "1.4.0"
-jetbrainsCompose = "1.9.1"
+jetbrainsCompose = "1.9.3"
 jetbrainsComposeMaterialIconsCore = "1.7.3"
 kotlin = "2.2.20"
+kotlinxBrowser = "0.5.0"
 kotlinxCoroutines = "1.10.2"
 kotlinxIo = "0.8.0"
 kotlinxSerialization = "1.9.0"
@@ -22,6 +23,7 @@ harawataAppdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppd
 jetbrainsComposeMaterialIconsCore = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "jetbrainsComposeMaterialIconsCore" }
 jetbrainsComposeUiBackhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "jetbrainsCompose" }
 kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinxBrowser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinxIoCore = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIo" }

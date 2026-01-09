@@ -7,8 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
+import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import kotlin.io.path.Path
 
@@ -39,7 +39,7 @@ class MainApplication : Application(), GameStateProvider {
 
     override val gameState by lazy {
         GameState(
-            gameRepository = DefaultGameRepository(
+            gameRepository = JvmAndroidGameRepository(
                 file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
             ),
         )

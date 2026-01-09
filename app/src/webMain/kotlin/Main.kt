@@ -2,15 +2,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.alexjlockwood.twentyfortyeight.App
-import com.alexjlockwood.twentyfortyeight.repository.DefaultGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
+import com.alexjlockwood.twentyfortyeight.repository.WebGameRepository
 import kotlinx.browser.document
 import org.w3c.dom.HTMLDivElement
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val gameState by lazy {
-        GameState(gameRepository = DefaultGameRepository())
+        GameState(gameRepository = WebGameRepository())
     }
     ComposeViewport(viewportContainerId = "app") {
         App(gameState = gameState)
