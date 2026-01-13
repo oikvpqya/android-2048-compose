@@ -3,11 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 plugins {
     alias libs.plugins.androidApplication
@@ -18,22 +14,14 @@ plugins {
     alias libs.plugins.kotlinSerialization
 }
 
-tasks.withType(KotlinJvmCompile).configureEach {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-    }
-}
-
 kotlin {
-    androidTarget()
-
-    jvm("desktop") {
-        binaries {
-            executable {
-                mainClass.set("MainKt")
-            }
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
+
+    jvm("desktop")
 
     js {
         outputModuleName.set("composeApp")
@@ -235,20 +223,18 @@ private TaskProvider<LicenseeTask> licenseeResourcesGenerationTask(String suffix
     return tasks.register("generateLicenseeResources${replaceFirstCharWithUpperCase(suffix)}", LicenseeTask) { licenseeTask ->
         configurationToCheck configuration
         doLast {
-            Path from = Paths.get(licenseeTask.jsonOutput.get().toString())
-            Path to = Paths.get(outputDir.toString(), "files", "artifacts.json")
-            if (!Files.exists(to.parent)) {
-                Files.createDirectories(to.parent)
+            copy {
+                from licenseeTask.jsonOutput.get()
+                into outputDir.dir("files")
+                include "**/artifacts.json"
             }
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }
         doLast {
-            Path from = Paths.get(licenseeTask.validationOutput.get().toString())
-            Path to = Paths.get(layout.projectDirectory.toString(), "reports", "licensee", suffix, "validation.txt")
-            if (!Files.exists(to.parent)) {
-                Files.createDirectories(to.parent)
+            copy {
+                from licenseeTask.validationOutput.get()
+                into layout.projectDirectory.dir(Paths.get("reports", "licensee", suffix).toString())
+                include "**/validation.txt"
             }
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }
     }
 }
