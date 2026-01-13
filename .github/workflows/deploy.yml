@@ -23,12 +23,12 @@ jobs:
         with:
           distribution: 'jetbrains'
           java-package: 'jdk+jcef'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Build Web with Gradle
+      - name: Build with Gradle
         run: |
           ./gradlew :app:jsBrowserDistribution
           ./gradlew :app:wasmJsBrowserDistribution
@@ -39,13 +39,13 @@ jobs:
           ./gradlew :app:jsBrowserTest
           ./gradlew :app:wasmJsBrowserTest
 
-      - name: Organize Pages artifact
+      - name: Organize artifacts
         run: |
           cp -r app/build/dist/composeWebCompatibility/productionExecutable dist
           cp -r app/build/dist/js/productionExecutable dist/js
           cp -r app/build/dist/wasmJs/productionExecutable dist/wasmJs
 
-      - name: Upload Pages artifact
+      - name: Upload artifacts
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
