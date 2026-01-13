@@ -1,8 +1,10 @@
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
 import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
+import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import net.harawata.appdirs.AppDirsFactory
 import kotlin.io.path.Path
@@ -15,23 +17,27 @@ private const val VERSION = "1.0.0"
 private const val AUTHOR = "alexjlockwood"
 
 fun main() {
-    val gameState by lazy {
+    val gameRepository by lazy {
         val userDataRootDirString = AppDirsFactory.getInstance().getUserDataDir(null, null, null) ?: ""
         val userDataDir = Path(userDataRootDirString, AUTHOR, PACKAGE_NAME, VERSION)
         if (!userDataDir.exists()) {
             userDataDir.createDirectories()
         }
-        val gameRepository = JvmAndroidGameRepository(
+        JvmAndroidGameRepository(
             file = userDataDir.div(USER_DATA_FILE_NAME),
         )
-        GameState(gameRepository = gameRepository)
     }
+    val gameState by lazy { GameState() }
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "2048 Compose",
         ) {
-            App(gameState = gameState)
+            CompositionLocalProvider(
+                LocalGameRepository provides gameRepository,
+            ) {
+                App(gameState = gameState)
+            }
         }
     }
 }

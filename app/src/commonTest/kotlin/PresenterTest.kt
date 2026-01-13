@@ -43,10 +43,11 @@ class PresenterTest {
 
     @Test
     fun rememberGamePresenter() = runTest {
-        val state = createState()
+        val repository = createRepository()
+        val state = GameState()
         val eventBus = buildEventBus<GameUiEvent>()
         moleculeFlow(RecompositionMode.Immediate) {
-            rememberGamePresenter(state, eventBus).collectAsState().value
+            rememberGamePresenter(state, eventBus, repository).collectAsState().value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             assertIs<GameUiState.Loading>(awaitItem())
@@ -226,10 +227,6 @@ private fun createRepository(
         delay(100.milliseconds)
     }
 }
-
-private fun createState(
-    store: UserDataStore = UserDataStore(),
-): GameState = GameState(createRepository(store))
 
 private fun TestScope.createPresenter(
     repository: GameRepository,
