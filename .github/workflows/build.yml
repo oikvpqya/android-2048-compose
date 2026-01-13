@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up JDK
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: 'jetbrains'
@@ -36,13 +36,13 @@ jobs:
           ./gradlew :app:jsBrowserTest
           ./gradlew :app:wasmJsBrowserTest
 
-      - name: Upload Debug APK
+      - name: Upload Android Debug APK
         uses: actions/upload-artifact@v6
         with:
           name: debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Upload Release APK
+      - name: Upload Android Release APK
         uses: actions/upload-artifact@v6
         with:
           name: release-apk
