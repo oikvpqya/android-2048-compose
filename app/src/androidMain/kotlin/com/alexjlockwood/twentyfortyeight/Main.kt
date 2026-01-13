@@ -7,8 +7,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
+import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
+import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
 import kotlin.io.path.Path
 
@@ -18,7 +21,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = createStatusBarStyle())
         setContent {
-            App(gameState = (application as GameStateProvider).gameState)
+            CompositionLocalProvider(
+                LocalGameRepository provides (application as GameRepositoryProvider).gameRepository,
+            ) {
+                App(gameState = (application as GameStateProvider).gameState)
+            }
         }
     }
 
@@ -35,15 +42,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-class MainApplication : Application(), GameStateProvider {
+class MainApplication : Application(), GameRepositoryProvider, GameStateProvider {
 
-    override val gameState by lazy {
-        GameState(
-            gameRepository = JvmAndroidGameRepository(
-                file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
-            ),
+    override val gameRepository by lazy {
+        JvmAndroidGameRepository(
+            file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
         )
     }
+
+    override val gameState by lazy {
+        GameState()
+    }
+}
+
+private interface GameRepositoryProvider {
+
+    val gameRepository: GameRepository
 }
 
 private interface GameStateProvider {

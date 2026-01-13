@@ -10,6 +10,7 @@ import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
 import com.alexjlockwood.twentyfortyeight.repository.GameState
+import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
@@ -61,11 +62,12 @@ sealed interface GameUiState {
 fun rememberGamePresenter(
     gameState: GameState,
     eventBus: EventBus<GameUiEvent> = rememberEventBus(),
+    gameRepository: GameRepository = LocalGameRepository.current,
 ): Presenter<GameUiEvent, GameUiState> {
     val coroutineScope = rememberCoroutineScope()
     return remember(
-        gameState,
-    ) { GamePresenter(gameState.gameRepository, gameState.mutableStack, coroutineScope, eventBus) }
+        gameState, gameRepository, coroutineScope, eventBus,
+    ) { GamePresenter(gameRepository, gameState.mutableStack, coroutineScope, eventBus) }
 }
 
 class GamePresenter(
