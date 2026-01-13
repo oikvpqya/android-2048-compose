@@ -100,17 +100,17 @@ class GamePresenter(
         when (event) {
             GameUiEvent.Load -> {
                 if (currentData != null && currentData.movements.isNotEmpty()) {
-                    produceUiState(GameUiState.Success(currentData, checkIsUndoable()))
+                    produceState(GameUiState.Success(currentData, checkIsUndoable()))
                 } else {
-                    produceUiState(GameUiState.Loading)
+                    produceState(GameUiState.Loading)
                     val store = gameRepository.fetch()
                     if (store != UserData() && store.movements.isNotEmpty()) {
                         // Restore a previously saved game.
                         mutableStack.clear()
                         mutableStack.add(store)
-                        produceUiState(GameUiState.Success(store, false))
+                        produceState(GameUiState.Success(store, false))
                     } else {
-                        produceUiState(GameUiState.Success(startNewGame(GRID_SIZE, 0), false))
+                        produceState(GameUiState.Success(startNewGame(GRID_SIZE, 0), false))
                     }
                 }
             }
@@ -123,13 +123,13 @@ class GamePresenter(
                         // Push game data to stack.
                         mutableStack.add(updatedData)
                         save(updatedData)
-                        produceUiState(GameUiState.Success(updatedData, checkIsUndoable()))
+                        produceState(GameUiState.Success(updatedData, checkIsUndoable()))
                     }
                 }
             }
             GameUiEvent.StartNewGame -> {
                 val bestScore = currentData?.bestScore ?: 0
-                produceUiState(GameUiState.Success(startNewGame(GRID_SIZE, bestScore), false))
+                produceState(GameUiState.Success(startNewGame(GRID_SIZE, bestScore), false))
             }
             GameUiEvent.Undo -> {
                 if (checkIsUndoable()) {
@@ -139,7 +139,7 @@ class GamePresenter(
                         last()
                     }
                     save(updatedData)
-                    produceUiState(GameUiState.Success(updatedData, checkIsUndoable()))
+                    produceState(GameUiState.Success(updatedData, checkIsUndoable()))
                 }
             }
         }

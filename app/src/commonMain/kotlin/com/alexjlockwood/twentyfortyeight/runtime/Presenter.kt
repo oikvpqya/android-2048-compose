@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface Presenter<EVENT, STATE> : EventBus<EVENT> {
 
     val stateFlow: StateFlow<STATE>
-    fun produceUiState(uiState: STATE)
+    fun produceState(state: STATE)
     suspend fun handleEvent(event: EVENT)
 }
 

@@ -5,14 +5,14 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class PresenterImpl<EVENT, STATE>(
     base: EventBus<EVENT>,
-    initialUiState: STATE,
+    initialState: STATE,
 ) : Presenter<EVENT, STATE>, EventBus<EVENT> by base {
 
-    private val mutableUiStateFlow = MutableStateFlow(initialUiState)
-    override val stateFlow = mutableUiStateFlow.asStateFlow()
+    private val mutableStateFlow = MutableStateFlow(initialState)
+    override val stateFlow = mutableStateFlow.asStateFlow()
 
-    override fun produceUiState(uiState: STATE) {
-        mutableUiStateFlow.value = uiState
+    override fun produceState(state: STATE) {
+        mutableStateFlow.value = state
     }
 
     override suspend fun handleEvent(event: EVENT) {}
