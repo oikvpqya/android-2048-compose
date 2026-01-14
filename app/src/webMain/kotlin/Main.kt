@@ -3,7 +3,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.alexjlockwood.twentyfortyeight.App
-import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.WebGameRepository
 import kotlinx.browser.document
@@ -14,12 +13,11 @@ fun main() {
     val gameRepository by lazy {
         WebGameRepository()
     }
-    val gameState by lazy { GameState() }
     ComposeViewport(viewportContainerId = "app") {
         CompositionLocalProvider(
             LocalGameRepository provides gameRepository,
         ) {
-            App(gameState = gameState)
+            App()
         }
         LaunchedEffect(Unit) {
             document.getElementById("indicator")?.let { element ->

@@ -1,13 +1,14 @@
 [versions]
 androidGradlePlugin = "8.10.1"
-androidxActivity = "1.10.1"
-androidxCore = "1.16.0"
+androidxActivity = "1.12.2"
+androidxCore = "1.17.0"
 cashLicensee = "1.13.0"
 cashMolecule = "2.0.0"
 cashTurbine = "1.2.0"
 harawataAppdirs = "1.4.0"
-jetbrainsCompose = "1.9.3"
+jetbrainsCompose = "1.10.0"
 jetbrainsComposeMaterialIconsCore = "1.7.3"
+jetbrainsNavigationEventCompose = "1.0.0"
 kotlin = "2.2.20"
 kotlinxBrowser = "0.5.0"
 kotlinxCoroutines = "1.10.2"
@@ -20,8 +21,11 @@ androidxCoreKtx = { module = "androidx.core:core-ktx", version.ref = "androidxCo
 cashMolecule = { module = "app.cash.molecule:molecule-runtime", version.ref = "cashMolecule" }
 cashTurbine = { module = "app.cash.turbine:turbine", version.ref = "cashTurbine" }
 harawataAppdirs = { module = "net.harawata:appdirs", version.ref = "harawataAppdirs" }
+jetbrainsComposeComponentsResources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "jetbrainsCompose" }
+jetbrainsComposeMaterial = { module = "org.jetbrains.compose.material:material", version.ref = "jetbrainsCompose" }
 jetbrainsComposeMaterialIconsCore = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "jetbrainsComposeMaterialIconsCore" }
-jetbrainsComposeUiBackhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "jetbrainsCompose" }
+jetbrainsComposeUi = { module = "org.jetbrains.compose.ui:ui", version.ref = "jetbrainsCompose" }
+jetbrainsNavigationEventCompose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "jetbrainsNavigationEventCompose" }
 kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinxBrowser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinxBrowser" }
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }

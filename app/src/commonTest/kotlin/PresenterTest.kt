@@ -6,10 +6,10 @@ import com.alexjlockwood.twentyfortyeight.domain.MutableLimitedList
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.domain.UserDataStore
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
 import com.alexjlockwood.twentyfortyeight.runtime.buildEventBus
+import com.alexjlockwood.twentyfortyeight.runtime.buildPresenter
 import com.alexjlockwood.twentyfortyeight.runtime.collectAsState
 import com.alexjlockwood.twentyfortyeight.ui.GamePresenter
 import com.alexjlockwood.twentyfortyeight.ui.GameUiEvent
@@ -28,6 +28,19 @@ import kotlin.time.Duration.Companion.milliseconds
 class PresenterTest {
 
     @Test
+    fun produceState() = runTest {
+        val presenter = buildPresenter<GameUiEvent, GameUiState>(GameUiState.Nothing, buildEventBus())
+        moleculeFlow(RecompositionMode.Immediate) {
+            presenter.collectAsState().value
+        }.test {
+            assertIs<GameUiState.Nothing>(awaitItem())
+            presenter.produceState(GameUiState.Loading)
+            assertIs<GameUiState.Loading>(awaitItem())
+            ensureAllEventsConsumed()
+        }
+    }
+
+    @Test
     fun produceEvent() = runTest {
         val presenter = createPresenter(createRepository())
         moleculeFlow(RecompositionMode.Immediate) {
@@ -44,10 +57,9 @@ class PresenterTest {
     @Test
     fun rememberGamePresenter() = runTest {
         val repository = createRepository()
-        val state = GameState()
         val eventBus = buildEventBus<GameUiEvent>()
         moleculeFlow(RecompositionMode.Immediate) {
-            rememberGamePresenter(state, eventBus, repository).collectAsState().value
+            rememberGamePresenter(eventBus, repository).collectAsState().value
         }.test {
             assertIs<GameUiState.Nothing>(awaitItem())
             assertIs<GameUiState.Loading>(awaitItem())
