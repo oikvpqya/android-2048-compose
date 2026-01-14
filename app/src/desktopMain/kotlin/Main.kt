@@ -2,7 +2,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.alexjlockwood.twentyfortyeight.App
-import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
@@ -27,7 +26,6 @@ fun main() {
             file = userDataDir.div(USER_DATA_FILE_NAME),
         )
     }
-    val gameState by lazy { GameState() }
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -36,7 +34,7 @@ fun main() {
             CompositionLocalProvider(
                 LocalGameRepository provides gameRepository,
             ) {
-                App(gameState = gameState)
+                App()
             }
         }
     }

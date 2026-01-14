@@ -51,11 +51,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation compose.components.resources
-                implementation compose.material
-                implementation compose.ui
+                implementation libs.jetbrainsComposeComponentsResources
+                implementation libs.jetbrainsComposeMaterial
                 implementation libs.jetbrainsComposeMaterialIconsCore
-                implementation libs.jetbrainsComposeUiBackhandler
+                implementation libs.jetbrainsComposeUi
+                implementation libs.jetbrainsNavigationEventCompose
                 implementation libs.kotlinxCoroutinesCore
                 implementation libs.kotlinxSerializationJson
             }
@@ -112,13 +112,13 @@ kotlin {
 }
 
 android {
-    compileSdk 35
+    compileSdk 36
     namespace "com.alexjlockwood.twentyfortyeightcompose"
 
     defaultConfig {
         applicationId "com.alexjlockwood.twentyfortyeightcompose"
         minSdk 26 // A minimal available API for java.nio.Files atomic movement.
-        targetSdk 35
+        targetSdk 36
         versionCode 1
         versionName "1.0.0"
     }
@@ -168,12 +168,6 @@ compose {
                 packageName "com.alexjlockwood.twentyfortyeightcompose"
                 packageVersion "1.0.0"
             }
-        }
-    }
-
-    experimental {
-        web {
-            application {}
         }
     }
 

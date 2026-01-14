@@ -4,12 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import com.alexjlockwood.twentyfortyeight.domain.Direction
 import com.alexjlockwood.twentyfortyeight.domain.GameStrategy
 import com.alexjlockwood.twentyfortyeight.domain.GridTileMovement
+import com.alexjlockwood.twentyfortyeight.domain.MutableLimitedList
 import com.alexjlockwood.twentyfortyeight.domain.UserData
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.runtime.EventBus
 import com.alexjlockwood.twentyfortyeight.runtime.Presenter
@@ -60,14 +61,14 @@ sealed interface GameUiState {
 
 @Composable
 fun rememberGamePresenter(
-    gameState: GameState,
     eventBus: EventBus<GameUiEvent> = rememberEventBus(),
     gameRepository: GameRepository = LocalGameRepository.current,
 ): Presenter<GameUiEvent, GameUiState> {
     val coroutineScope = rememberCoroutineScope()
+    val mutableStack = retain { MutableLimitedList(mutableListOf<UserData>(), 100) }
     return remember(
-        gameState, gameRepository, coroutineScope, eventBus,
-    ) { GamePresenter(gameRepository, gameState.mutableStack, coroutineScope, eventBus) }
+        gameRepository, mutableStack, coroutineScope, eventBus,
+    ) { GamePresenter(gameRepository, mutableStack, coroutineScope, eventBus) }
 }
 
 class GamePresenter(

@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import com.alexjlockwood.twentyfortyeight.repository.GameRepository
-import com.alexjlockwood.twentyfortyeight.repository.GameState
 import com.alexjlockwood.twentyfortyeight.repository.JvmAndroidGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.LocalGameRepository
 import com.alexjlockwood.twentyfortyeight.repository.USER_DATA_FILE_NAME
@@ -24,7 +23,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalGameRepository provides (application as GameRepositoryProvider).gameRepository,
             ) {
-                App(gameState = (application as GameStateProvider).gameState)
+                App()
             }
         }
     }
@@ -42,25 +41,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-class MainApplication : Application(), GameRepositoryProvider, GameStateProvider {
+class MainApplication : Application(), GameRepositoryProvider {
 
     override val gameRepository by lazy {
         JvmAndroidGameRepository(
             file = Path(filesDir.absolutePath, USER_DATA_FILE_NAME),
         )
     }
-
-    override val gameState by lazy {
-        GameState()
-    }
 }
 
 private interface GameRepositoryProvider {
 
     val gameRepository: GameRepository
-}
-
-private interface GameStateProvider {
-
-    val gameState: GameState
 }
